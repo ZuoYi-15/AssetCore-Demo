@@ -1,0 +1,597 @@
+{
+  "info": {
+    "_postman_id": "7fd2ef73-5f3a-4c24-8a3f-4f7325f7e4df",
+    "name": "Asset-Core API",
+    "description": "Asset-Core trusted device asset management API collection. Import this file into Postman directly.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8080"
+    },
+    {
+      "key": "asset_id",
+      "value": "1"
+    },
+    {
+      "key": "identity_id",
+      "value": "did:asset:replace_with_generated_identity"
+    },
+    {
+      "key": "verification_id",
+      "value": "1"
+    },
+    {
+      "key": "import_task_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/health'"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assets",
+      "item": [
+        {
+          "name": "Create Asset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asset_name\": \"edge-gateway-01\",\n  \"asset_type\": \"gateway\",\n  \"vendor\": \"example-vendor\",\n  \"model\": \"gw-1000\",\n  \"serial_number\": \"SN-001\",\n  \"mac_address\": \"00:11:22:33:44:55\",\n  \"ip_address\": \"192.168.1.10\",\n  \"hostname\": \"edge-gateway-01\",\n  \"owner_department\": \"security\",\n  \"owner_user\": \"admin\",\n  \"location\": \"shanghai\",\n  \"source\": \"manual\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/assets' --header 'Content-Type: application/json' --data '{\"asset_name\":\"edge-gateway-01\",\"asset_type\":\"gateway\",\"vendor\":\"example-vendor\",\"model\":\"gw-1000\",\"serial_number\":\"SN-001\",\"mac_address\":\"00:11:22:33:44:55\",\"ip_address\":\"192.168.1.10\",\"hostname\":\"edge-gateway-01\",\"owner_department\":\"security\",\"owner_user\":\"admin\",\"location\":\"shanghai\",\"source\":\"manual\"}'"
+          }
+        },
+        {
+          "name": "List Assets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets?page=1&page_size=20&keyword=&status=&asset_type=",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "keyword",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "asset_type",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/assets?page=1&page_size=20'"
+          }
+        },
+        {
+          "name": "Get Asset",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/{{asset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                "{{asset_id}}"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/assets/{{asset_id}}'"
+          }
+        },
+        {
+          "name": "Update Asset",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asset_name\": \"edge-gateway-01-updated\",\n  \"asset_type\": \"gateway\",\n  \"vendor\": \"example-vendor\",\n  \"model\": \"gw-1000\",\n  \"serial_number\": \"SN-001\",\n  \"mac_address\": \"00:11:22:33:44:55\",\n  \"ip_address\": \"192.168.1.11\",\n  \"hostname\": \"edge-gateway-01\",\n  \"owner_department\": \"security\",\n  \"owner_user\": \"admin\",\n  \"location\": \"shanghai\",\n  \"source\": \"manual\",\n  \"trust_level\": \"strong\",\n  \"status\": \"registered\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/{{asset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                "{{asset_id}}"
+              ]
+            },
+            "description": "curl --location --request PUT '{{base_url}}/api/v1/assets/{{asset_id}}' --header 'Content-Type: application/json' --data '{\"asset_name\":\"edge-gateway-01-updated\",\"ip_address\":\"192.168.1.11\",\"status\":\"registered\"}'"
+          }
+        },
+        {
+          "name": "Delete Asset",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/{{asset_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                "{{asset_id}}"
+              ]
+            },
+            "description": "curl --location --request DELETE '{{base_url}}/api/v1/assets/{{asset_id}}'"
+          }
+        },
+        {
+          "name": "Change Asset Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"verified\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/{{asset_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                "{{asset_id}}",
+                "status"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/assets/{{asset_id}}/status' --header 'Content-Type: application/json' --data '{\"status\":\"verified\"}'"
+          }
+        },
+        {
+          "name": "Get Asset Change Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/{{asset_id}}/changes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                "{{asset_id}}",
+                "changes"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/assets/{{asset_id}}/changes'"
+          }
+        },
+        {
+          "name": "Verify Asset",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/{{asset_id}}/verify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                "{{asset_id}}",
+                "verify"
+              ]
+            },
+            "description": "curl --location --request POST '{{base_url}}/api/v1/assets/{{asset_id}}/verify'"
+          }
+        },
+        {
+          "name": "Get Asset Latest Verification Result",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/assets/{{asset_id}}/verification-result",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "assets",
+                "{{asset_id}}",
+                "verification-result"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/assets/{{asset_id}}/verification-result'"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Identities",
+      "item": [
+        {
+          "name": "Generate Identity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenant_id\": \"default\",\n  \"serial_number\": \"SN-001\",\n  \"vendor\": \"example-vendor\",\n  \"model\": \"gw-1000\",\n  \"mac_address\": \"00:11:22:33:44:55\",\n  \"ip_address\": \"192.168.1.10\",\n  \"source\": \"manual\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/identities/generate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identities",
+                "generate"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/identities/generate' --header 'Content-Type: application/json' --data '{\"tenant_id\":\"default\",\"serial_number\":\"SN-001\",\"vendor\":\"example-vendor\",\"model\":\"gw-1000\",\"mac_address\":\"00:11:22:33:44:55\",\"ip_address\":\"192.168.1.10\",\"source\":\"manual\"}'"
+          }
+        },
+        {
+          "name": "Get Identity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/identities/{{identity_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identities",
+                "{{identity_id}}"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/identities/{{identity_id}}'"
+          }
+        },
+        {
+          "name": "Bind Identity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asset_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/identities/{{identity_id}}/bind",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identities",
+                "{{identity_id}}",
+                "bind"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/identities/{{identity_id}}/bind' --header 'Content-Type: application/json' --data '{\"asset_id\":1}'"
+          }
+        },
+        {
+          "name": "Unbind Identity",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/identities/{{identity_id}}/unbind",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identities",
+                "{{identity_id}}",
+                "unbind"
+              ]
+            },
+            "description": "curl --location --request POST '{{base_url}}/api/v1/identities/{{identity_id}}/unbind'"
+          }
+        },
+        {
+          "name": "Get Identity Features",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/identities/{{identity_id}}/features",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "identities",
+                "{{identity_id}}",
+                "features"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/identities/{{identity_id}}/features'"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Verifications",
+      "item": [
+        {
+          "name": "Create Verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asset_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/verifications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "verifications"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/verifications' --header 'Content-Type: application/json' --data '{\"asset_id\":1}'"
+          }
+        },
+        {
+          "name": "Get Verification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/verifications/{{verification_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "verifications",
+                "{{verification_id}}"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/verifications/{{verification_id}}'"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data",
+      "item": [
+        {
+          "name": "Create Import Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"file_name\": \"assets.csv\",\n  \"file_url\": \"local://assets.csv\",\n  \"operator_id\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/data/import",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data",
+                "import"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/data/import' --header 'Content-Type: application/json' --data '{\"file_name\":\"assets.csv\",\"file_url\":\"local://assets.csv\",\"operator_id\":\"admin\"}'"
+          }
+        },
+        {
+          "name": "List Import Tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/data/import-tasks?page=1&page_size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data",
+                "import-tasks"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/data/import-tasks?page=1&page_size=20'"
+          }
+        },
+        {
+          "name": "Get Import Task",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/data/import-tasks/{{import_task_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data",
+                "import-tasks",
+                "{{import_task_id}}"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/data/import-tasks/{{import_task_id}}'"
+          }
+        },
+        {
+          "name": "Get Import Task Errors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/data/import-tasks/{{import_task_id}}/errors",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data",
+                "import-tasks",
+                "{{import_task_id}}",
+                "errors"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/data/import-tasks/{{import_task_id}}/errors'"
+          }
+        },
+        {
+          "name": "Export Assets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/data/export/assets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "data",
+                "export",
+                "assets"
+              ]
+            },
+            "description": "curl --location '{{base_url}}/api/v1/data/export/assets'"
+          }
+        }
+      ]
+    }
+  ]
+}

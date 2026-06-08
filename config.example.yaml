@@ -1,0 +1,23 @@
+app:
+  name: asset-core
+  env: dev
+  port: 8080
+
+mysql:
+  dsn: asset_core:asset_core_password@tcp(127.0.0.1:3306)/asset_core?charset=utf8mb4&parseTime=True&loc=Local
+  max_open_conns: 50
+  max_idle_conns: 10
+
+redis:
+  addr: 127.0.0.1:6379
+  password: ""
+  db: 0
+
+kafka:
+  brokers:
+    - 127.0.0.1:9092
+  enabled: false
+
+jwt:
+  secret: change-me
+  issuer: asset-core
