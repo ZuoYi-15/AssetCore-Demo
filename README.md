@@ -20,6 +20,20 @@ go run ./cmd/migrate
 go run ./cmd/server
 ```
 
+Frontend:
+
+```powershell
+Set-Location web
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173
+```
+
 If MySQL returns `Error 1045 (28000): Access denied`, the existing Docker volume was likely initialized with an older password. MySQL only applies `MYSQL_ROOT_PASSWORD`, `MYSQL_USER`, and `MYSQL_PASSWORD` when the data directory is created for the first time. For a clean local reset:
 
 ```powershell

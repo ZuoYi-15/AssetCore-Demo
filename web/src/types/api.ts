@@ -1,0 +1,118 @@
+export interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data: T;
+  trace_id?: string;
+}
+
+export interface PageResult<T> {
+  items: T[];
+  page: number;
+  page_size: number;
+  total: number;
+}
+
+export interface Asset {
+  id: number;
+  identity_id: string;
+  asset_name: string;
+  asset_type: string;
+  vendor: string;
+  model: string;
+  serial_number: string;
+  mac_address: string;
+  ip_address: string;
+  hostname: string;
+  owner_department: string;
+  owner_user: string;
+  location: string;
+  source: string;
+  trust_level: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AssetForm = Partial<Omit<Asset, 'id' | 'identity_id' | 'created_at' | 'updated_at'>>;
+
+export interface ChangeLog {
+  id: number;
+  asset_id: number;
+  field: string;
+  old_value: string;
+  new_value: string;
+  operator: string;
+  created_at: string;
+}
+
+export interface Identity {
+  id: number;
+  identity_id: string;
+  fingerprint_hash: string;
+  identity_level: string;
+  asset_id: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IdentityFeature {
+  id: number;
+  identity_id: string;
+  feature_key: string;
+  feature_value_hash: string;
+  confidence: number;
+  source: string;
+  created_at: string;
+}
+
+export interface VerificationTask {
+  id: number;
+  task_no: string;
+  asset_id: number;
+  status: string;
+  score: number;
+  result: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VerificationConflict {
+  id: number;
+  task_id: number;
+  asset_id: number;
+  field: string;
+  expected: string;
+  actual: string;
+  severity: string;
+  created_at: string;
+}
+
+export interface VerificationResult {
+  task: VerificationTask;
+  conflicts: VerificationConflict[];
+}
+
+export interface ImportTask {
+  id: number;
+  task_no: string;
+  file_name: string;
+  file_url: string;
+  status: string;
+  total_count: number;
+  success_count: number;
+  failed_count: number;
+  operator_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ImportError {
+  id: number;
+  task_id: number;
+  row_number: number;
+  error_field: string;
+  error_message: string;
+  raw_data: string;
+  created_at: string;
+}
