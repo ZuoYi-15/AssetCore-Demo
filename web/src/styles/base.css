@@ -377,3 +377,20 @@ a {
   gap: 12px;
   flex-wrap: wrap;
 }
+
+.compact-header {
+  margin-top: 12px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.workflow-detail {
+  display: grid;
+  gap: 10px;
+  color: #344054;
+  line-height: 1.6;
+}

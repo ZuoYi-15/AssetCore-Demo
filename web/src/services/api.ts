@@ -9,7 +9,12 @@ import type {
   ImportAssetsResult,
   ImportTask,
   PageResult,
-  VerificationResult
+  StartWorkflowPayload,
+  VerificationResult,
+  WorkflowDefinition,
+  WorkflowDefinitionPayload,
+  WorkflowInstance,
+  WorkflowTask
 } from '../types/api';
 
 export async function health() {
@@ -120,4 +125,34 @@ export async function getImportTask(id: number) {
 export async function listImportErrors(id: number) {
   const res = await http.get(`/api/v1/data/import-tasks/${id}/errors`);
   return unwrap<ImportError[]>(res.data);
+}
+
+export async function listWorkflowDefinitions() {
+  const res = await http.get('/api/v1/workflows/definitions');
+  return unwrap<WorkflowDefinition[]>(res.data);
+}
+
+export async function saveWorkflowDefinition(payload: WorkflowDefinitionPayload) {
+  const res = await http.put('/api/v1/workflows/definitions', payload);
+  return unwrap<WorkflowDefinition>(res.data);
+}
+
+export async function startWorkflow(payload: StartWorkflowPayload) {
+  const res = await http.post('/api/v1/workflows/instances', payload);
+  return unwrap<WorkflowInstance>(res.data);
+}
+
+export async function listWorkflowInstances(params: Record<string, string | number>) {
+  const res = await http.get('/api/v1/workflows/instances', { params });
+  return unwrap<PageResult<WorkflowInstance>>(res.data);
+}
+
+export async function listWorkflowTasks(params: Record<string, string | number>) {
+  const res = await http.get('/api/v1/workflows/tasks', { params });
+  return unwrap<PageResult<WorkflowTask>>(res.data);
+}
+
+export async function approveWorkflowTask(id: number, action: 'approve' | 'reject', comment?: string) {
+  const res = await http.post(`/api/v1/workflows/tasks/${id}/approve`, { action, comment });
+  return unwrap<WorkflowInstance>(res.data);
 }

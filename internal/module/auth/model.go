@@ -12,6 +12,10 @@ const (
 	PermissionAssetUpdate = "asset:update"
 	PermissionAssetDelete = "asset:delete"
 	PermissionUserCreate  = "user:create"
+
+	PermissionWorkflowConfig  = "workflow:config"
+	PermissionWorkflowStart   = "workflow:start"
+	PermissionWorkflowApprove = "workflow:approve"
 )
 
 type User struct {

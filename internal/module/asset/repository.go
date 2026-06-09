@@ -68,6 +68,14 @@ func (r *Repository) CreateChangeLog(log *ChangeLog) error {
 	return r.db.Create(log).Error
 }
 
+func (r *Repository) HasChangeLog(assetID uint64, field, newValue string) (bool, error) {
+	var count int64
+	err := r.db.Model(&ChangeLog{}).
+		Where("asset_id = ? AND field = ? AND new_value = ?", assetID, field, newValue).
+		Count(&count).Error
+	return count > 0, err
+}
+
 func (r *Repository) ListChangeLogs(assetID uint64) ([]ChangeLog, error) {
 	var logs []ChangeLog
 	err := r.db.Where("asset_id = ?", assetID).Order("id DESC").Find(&logs).Error

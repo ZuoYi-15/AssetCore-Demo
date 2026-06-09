@@ -119,6 +119,20 @@ func (s *Service) ChangeLogs(assetID uint64) ([]ChangeLog, error) {
 	return s.repo.ListChangeLogs(assetID)
 }
 
+func (s *Service) RecordChangeLog(assetID uint64, field, oldValue, newValue, operator string) error {
+	return s.repo.CreateChangeLog(&ChangeLog{
+		AssetID:  assetID,
+		Field:    field,
+		OldValue: oldValue,
+		NewValue: newValue,
+		Operator: operator,
+	})
+}
+
+func (s *Service) HasChangeLog(assetID uint64, field, newValue string) (bool, error) {
+	return s.repo.HasChangeLog(assetID, field, newValue)
+}
+
 func (s *Service) indexAsset(item Asset) {
 	if s.search == nil || !s.search.Enabled() {
 		return

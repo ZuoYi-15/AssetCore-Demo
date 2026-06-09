@@ -7,6 +7,8 @@ import VerificationsView from '../views/VerificationsView.vue';
 import DataView from '../views/DataView.vue';
 import LoginView from '../views/LoginView.vue';
 import RegisterView from '../views/RegisterView.vue';
+import WorkflowConfigView from '../views/WorkflowConfigView.vue';
+import WorkflowTasksView from '../views/WorkflowTasksView.vue';
 import { hasPermission, isLoggedIn, loadProfile } from '../services/auth';
 
 const router = createRouter({
@@ -23,6 +25,8 @@ const router = createRouter({
         { path: 'identities', name: 'identities', component: IdentitiesView },
         { path: 'verifications', name: 'verifications', component: VerificationsView },
         { path: 'data', name: 'data', component: DataView },
+        { path: 'workflow-tasks', name: 'workflow-tasks', component: WorkflowTasksView, meta: { permission: 'workflow:approve' } },
+        { path: 'workflow-config', name: 'workflow-config', component: WorkflowConfigView, meta: { permission: 'workflow:config' } },
         { path: 'register', name: 'register', component: RegisterView, meta: { permission: 'user:create' } }
       ]
     }

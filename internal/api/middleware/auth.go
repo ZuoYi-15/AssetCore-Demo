@@ -47,13 +47,22 @@ func RequirePermission(permission string) gin.HandlerFunc {
 			return
 		}
 		claims, ok := value.(*auth.Claims)
-		if !ok || !hasPermission(claims.Permissions, permission) {
+		if !ok || (!hasRole(claims.Roles, auth.RoleSuperAdmin) && !hasPermission(claims.Permissions, permission)) {
 			response.Fail(c, http.StatusForbidden, apperrors.CodeForbidden, "permission denied")
 			c.Abort()
 			return
 		}
 		c.Next()
 	}
+}
+
+func hasRole(roles []string, required string) bool {
+	for _, role := range roles {
+		if role == required {
+			return true
+		}
+	}
+	return false
 }
 
 func hasPermission(permissions []string, required string) bool {

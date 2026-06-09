@@ -140,3 +140,74 @@ export interface ImportError {
   raw_data: string;
   created_at: string;
 }
+
+export type WorkflowType = 'purchase' | 'transfer' | 'retire';
+export type WorkflowStatus = 'active' | 'inactive' | 'pending' | 'approved' | 'rejected';
+
+export interface WorkflowNode {
+  id?: number;
+  definition_id?: number;
+  node_name: string;
+  approver_role: string;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface WorkflowDefinition {
+  id: number;
+  flow_type: WorkflowType;
+  name: string;
+  status: 'active' | 'inactive';
+  nodes: WorkflowNode[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkflowTask {
+  id: number;
+  instance_id: number;
+  node_id: number;
+  node_name: string;
+  approver_role: string;
+  sort_order: number;
+  status: 'pending' | 'approved' | 'rejected';
+  approver_id: number;
+  approver_name: string;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+  instance?: WorkflowInstance;
+}
+
+export interface WorkflowInstance {
+  id: number;
+  definition_id: number;
+  flow_type: WorkflowType;
+  asset_id: number;
+  title: string;
+  status: 'pending' | 'approved' | 'rejected';
+  current_task_id: number;
+  applicant_id: number;
+  applicant_name: string;
+  payload: string;
+  tasks?: WorkflowTask[];
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+}
+
+export interface WorkflowDefinitionPayload {
+  flow_type: WorkflowType;
+  name: string;
+  status: 'active' | 'inactive';
+  nodes: Array<Pick<WorkflowNode, 'node_name' | 'approver_role' | 'sort_order'>>;
+}
+
+export interface StartWorkflowPayload {
+  flow_type: WorkflowType;
+  asset_id?: number;
+  title: string;
+  payload?: Record<string, unknown>;
+}

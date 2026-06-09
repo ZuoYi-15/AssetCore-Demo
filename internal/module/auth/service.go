@@ -43,17 +43,13 @@ func (s *Service) Bootstrap() error {
 	if count > 0 {
 		return nil
 	}
-	user, err := s.Register(RegisterRequest{
+	_, err = s.Register(RegisterRequest{
 		Username:    "superadmin",
 		Password:    "Admin@123456",
 		DisplayName: "Super Administrator",
 		RoleCode:    RoleSuperAdmin,
 	})
-	if err != nil {
-		return err
-	}
-	_ = user
-	return nil
+	return err
 }
 
 func (s *Service) Register(req RegisterRequest) (*UserProfile, error) {
@@ -157,7 +153,7 @@ func (s *Service) Parse(token string) (*Claims, error) {
 func (s *Service) seedRolesAndPermissions() error {
 	roles := []Role{
 		{Code: RoleSuperAdmin, Name: "超级管理员", Description: "拥有系统全部权限"},
-		{Code: RoleAdmin, Name: "管理员", Description: "可管理资产台账"},
+		{Code: RoleAdmin, Name: "管理员", Description: "可管理资产台账并处理审批"},
 		{Code: RoleUser, Name: "普通用户", Description: "仅可查看资产台账"},
 	}
 	for _, role := range roles {
@@ -172,6 +168,9 @@ func (s *Service) seedRolesAndPermissions() error {
 		{Code: PermissionAssetUpdate, Name: "编辑资产", Resource: "asset", Action: "update"},
 		{Code: PermissionAssetDelete, Name: "删除资产", Resource: "asset", Action: "delete"},
 		{Code: PermissionUserCreate, Name: "注册账号", Resource: "user", Action: "create"},
+		{Code: PermissionWorkflowConfig, Name: "配置审批流程", Resource: "workflow", Action: "config"},
+		{Code: PermissionWorkflowStart, Name: "发起审批", Resource: "workflow", Action: "start"},
+		{Code: PermissionWorkflowApprove, Name: "处理审批", Resource: "workflow", Action: "approve"},
 	}
 	for _, permission := range permissions {
 		if err := s.repo.UpsertPermission(permission); err != nil {
@@ -180,8 +179,8 @@ func (s *Service) seedRolesAndPermissions() error {
 	}
 
 	rolePermissions := map[string][]string{
-		RoleSuperAdmin: {PermissionAssetRead, PermissionAssetCreate, PermissionAssetUpdate, PermissionAssetDelete, PermissionUserCreate},
-		RoleAdmin:      {PermissionAssetRead, PermissionAssetCreate, PermissionAssetUpdate, PermissionAssetDelete},
+		RoleSuperAdmin: {PermissionAssetRead, PermissionAssetCreate, PermissionAssetUpdate, PermissionAssetDelete, PermissionUserCreate, PermissionWorkflowConfig, PermissionWorkflowStart, PermissionWorkflowApprove},
+		RoleAdmin:      {PermissionAssetRead, PermissionAssetCreate, PermissionAssetUpdate, PermissionAssetDelete, PermissionWorkflowStart, PermissionWorkflowApprove},
 		RoleUser:       {PermissionAssetRead},
 	}
 	for role, permissionCodes := range rolePermissions {

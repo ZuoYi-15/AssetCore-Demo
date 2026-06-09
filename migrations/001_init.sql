@@ -174,3 +174,69 @@ CREATE TABLE IF NOT EXISTS auth_role_permission (
   created_at DATETIME(3),
   UNIQUE KEY idx_role_permission (role_id, permission_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS workflow_definition (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  flow_type VARCHAR(32) NOT NULL UNIQUE,
+  name VARCHAR(128) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  created_at DATETIME(3),
+  updated_at DATETIME(3),
+  INDEX idx_workflow_definition_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS workflow_node (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  definition_id BIGINT UNSIGNED NOT NULL,
+  node_name VARCHAR(128) NOT NULL,
+  approver_role VARCHAR(64) NOT NULL,
+  sort_order INT NOT NULL,
+  created_at DATETIME(3),
+  updated_at DATETIME(3),
+  INDEX idx_workflow_node_definition_id (definition_id),
+  INDEX idx_workflow_node_sort_order (sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS workflow_instance (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  definition_id BIGINT UNSIGNED NOT NULL,
+  flow_type VARCHAR(32) NOT NULL,
+  asset_id BIGINT UNSIGNED,
+  title VARCHAR(255) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  current_task_id BIGINT UNSIGNED,
+  applicant_id BIGINT UNSIGNED NOT NULL,
+  applicant_name VARCHAR(128),
+  payload TEXT,
+  created_at DATETIME(3),
+  updated_at DATETIME(3),
+  completed_at DATETIME(3),
+  INDEX idx_workflow_instance_definition_id (definition_id),
+  INDEX idx_workflow_instance_flow_type (flow_type),
+  INDEX idx_workflow_instance_asset_id (asset_id),
+  INDEX idx_workflow_instance_status (status),
+  INDEX idx_workflow_instance_current_task_id (current_task_id),
+  INDEX idx_workflow_instance_applicant_id (applicant_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS workflow_task (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  instance_id BIGINT UNSIGNED NOT NULL,
+  node_id BIGINT UNSIGNED NOT NULL,
+  node_name VARCHAR(128) NOT NULL,
+  approver_role VARCHAR(64) NOT NULL,
+  sort_order INT NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  approver_id BIGINT UNSIGNED,
+  approver_name VARCHAR(128),
+  comment VARCHAR(512),
+  created_at DATETIME(3),
+  updated_at DATETIME(3),
+  completed_at DATETIME(3),
+  INDEX idx_workflow_task_instance_id (instance_id),
+  INDEX idx_workflow_task_node_id (node_id),
+  INDEX idx_workflow_task_approver_role (approver_role),
+  INDEX idx_workflow_task_sort_order (sort_order),
+  INDEX idx_workflow_task_status (status),
+  INDEX idx_workflow_task_approver_id (approver_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

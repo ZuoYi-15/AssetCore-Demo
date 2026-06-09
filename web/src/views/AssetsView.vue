@@ -28,20 +28,26 @@
       <el-table-column prop="mac_address" label="MAC" min-width="150" />
       <el-table-column prop="ip_address" label="IP" width="140" />
       <el-table-column label="可信等级" width="120">
-        <template #default="{ row }">
-          <StatusPill :value="row.trust_level" />
-        </template>
+        <template #default="{ row }"><StatusPill :value="row.trust_level" /></template>
       </el-table-column>
       <el-table-column label="状态" width="120">
-        <template #default="{ row }">
-          <StatusPill :value="row.status" />
-        </template>
+        <template #default="{ row }"><StatusPill :value="row.status" /></template>
       </el-table-column>
       <el-table-column prop="owner_department" label="部门" width="140" />
       <el-table-column prop="location" label="位置" width="140" />
-      <el-table-column label="操作" width="290" fixed="right">
+      <el-table-column label="操作" width="370" fixed="right">
         <template #default="{ row }">
           <span class="table-actions">
+            <el-dropdown v-if="canStartWorkflow" trigger="click" @command="(flowType: WorkflowType) => openWorkflow(row, flowType)">
+              <el-button size="small" :icon="GitBranch">审批</el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="purchase">采购</el-dropdown-item>
+                  <el-dropdown-item command="transfer">调拨</el-dropdown-item>
+                  <el-dropdown-item command="retire">报废</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             <el-button v-if="canUpdateAsset" size="small" :icon="ShieldCheck" @click="runVerify(row.id)">验证</el-button>
             <el-button size="small" :icon="History" @click="openChanges(row)">日志</el-button>
             <el-button v-if="canUpdateAsset" size="small" :icon="Pencil" @click="openEdit(row)">编辑</el-button>
@@ -96,23 +102,13 @@
 
   <el-dialog v-model="importVisible" title="资产批量导入" width="560px">
     <div class="import-strip">
-      <el-upload
-        ref="uploadRef"
-        action=""
-        :auto-upload="false"
-        :limit="1"
-        accept=".xlsx"
-        :on-change="onFileChange"
-        :on-remove="onFileRemove"
-      >
+      <el-upload ref="uploadRef" action="" :auto-upload="false" :limit="1" accept=".xlsx" :on-change="onFileChange" :on-remove="onFileRemove">
         <el-button :icon="FileSpreadsheet">选择 Excel</el-button>
       </el-upload>
       <el-button :icon="Download" @click="downloadDemo">下载模板</el-button>
     </div>
     <el-form label-position="top" style="margin-top: 16px">
-      <el-form-item label="操作人">
-        <el-input v-model="operatorID" placeholder="请输入操作人" />
-      </el-form-item>
+      <el-form-item label="操作人"><el-input v-model="operatorID" placeholder="请输入操作人" /></el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="importVisible = false">取消</el-button>
@@ -120,11 +116,29 @@
     </template>
   </el-dialog>
 
+  <el-dialog v-model="workflowVisible" title="发起资产审批" width="620px">
+    <el-form label-position="top">
+      <el-form-item label="审批类型"><el-input :model-value="flowTypeLabel(workflowForm.flow_type)" disabled /></el-form-item>
+      <el-form-item label="标题"><el-input v-model="workflowForm.title" /></el-form-item>
+      <div v-if="workflowForm.flow_type === 'transfer'" class="form-grid">
+        <el-form-item label="调拨后部门"><el-input v-model="workflowForm.target_department" /></el-form-item>
+        <el-form-item label="调拨后负责人"><el-input v-model="workflowForm.target_owner" /></el-form-item>
+        <el-form-item label="调拨后位置" class="full-row"><el-input v-model="workflowForm.target_location" /></el-form-item>
+      </div>
+      <el-form-item label="申请说明"><el-input v-model="workflowForm.reason" type="textarea" :rows="4" /></el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="workflowVisible = false">取消</el-button>
+      <el-button type="primary" :icon="GitBranch" :loading="workflowSubmitting" @click="submitWorkflow">发起审批</el-button>
+    </template>
+  </el-dialog>
+
   <el-drawer v-model="detailVisible" title="资产变更日志" size="560px">
     <el-table :data="changes">
-      <el-table-column prop="field" label="字段" width="140" />
+      <el-table-column prop="field" label="字段" width="150" />
       <el-table-column prop="old_value" label="原值" />
       <el-table-column prop="new_value" label="新值" />
+      <el-table-column prop="operator" label="操作人" width="110" />
       <el-table-column prop="created_at" label="时间" width="170" />
     </el-table>
   </el-drawer>
@@ -133,11 +147,11 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { ElMessage, ElMessageBox, type UploadFile, type UploadInstance } from 'element-plus';
-import { Download, FileSpreadsheet, History, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, UploadCloud } from 'lucide-vue-next';
+import { Download, FileSpreadsheet, GitBranch, History, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, UploadCloud } from 'lucide-vue-next';
 import StatusPill from '../components/StatusPill.vue';
-import { createAsset, deleteAsset, getAssetChanges, importAssetsExcel, listAssets, updateAsset, verifyAsset } from '../services/api';
+import { createAsset, deleteAsset, getAssetChanges, importAssetsExcel, listAssets, startWorkflow, updateAsset, verifyAsset } from '../services/api';
 import { hasPermission } from '../services/auth';
-import type { Asset, AssetForm, ChangeLog } from '../types/api';
+import type { Asset, AssetForm, ChangeLog, WorkflowType } from '../types/api';
 
 const loading = ref(false);
 const items = ref<Asset[]>([]);
@@ -147,18 +161,30 @@ const pageSize = ref(20);
 const query = reactive({ keyword: '', status: '', asset_type: '' });
 const formVisible = ref(false);
 const importVisible = ref(false);
+const workflowVisible = ref(false);
 const detailVisible = ref(false);
 const editing = ref<Asset | null>(null);
+const workflowAsset = ref<Asset | null>(null);
 const form = reactive<AssetForm>({});
+const workflowForm = reactive({
+  flow_type: 'purchase' as WorkflowType,
+  title: '',
+  reason: '',
+  target_department: '',
+  target_owner: '',
+  target_location: ''
+});
 const changes = ref<ChangeLog[]>([]);
 const uploadRef = ref<UploadInstance>();
 const selectedFile = ref<File | null>(null);
 const operatorID = ref('admin');
 const uploading = ref(false);
+const workflowSubmitting = ref(false);
 
 const canCreateAsset = computed(() => hasPermission('asset:create'));
 const canUpdateAsset = computed(() => hasPermission('asset:update'));
 const canDeleteAsset = computed(() => hasPermission('asset:delete'));
+const canStartWorkflow = computed(() => hasPermission('workflow:start'));
 
 async function load() {
   loading.value = true;
@@ -195,6 +221,17 @@ function openImport() {
   importVisible.value = true;
 }
 
+function openWorkflow(row: Asset, flowType: WorkflowType) {
+  workflowAsset.value = row;
+  workflowForm.flow_type = flowType;
+  workflowForm.title = `${flowTypeLabel(flowType)} - ${row.asset_name}`;
+  workflowForm.reason = '';
+  workflowForm.target_department = row.owner_department || '';
+  workflowForm.target_owner = row.owner_user || '';
+  workflowForm.target_location = row.location || '';
+  workflowVisible.value = true;
+}
+
 function onFileChange(file: UploadFile) {
   selectedFile.value = file.raw || null;
 }
@@ -208,6 +245,15 @@ function downloadDemo() {
   link.href = '/docs/asset-import-demo.xlsx';
   link.download = 'asset-import-demo.xlsx';
   link.click();
+}
+
+function flowTypeLabel(flowType: WorkflowType) {
+  const labels: Record<WorkflowType, string> = {
+    purchase: '采购审批',
+    transfer: '调拨审批',
+    retire: '报废审批'
+  };
+  return labels[flowType];
 }
 
 async function uploadExcel() {
@@ -225,6 +271,33 @@ async function uploadExcel() {
     await load();
   } finally {
     uploading.value = false;
+  }
+}
+
+async function submitWorkflow() {
+  if (!workflowAsset.value || !workflowForm.title) {
+    ElMessage.warning('请填写审批标题');
+    return;
+  }
+  workflowSubmitting.value = true;
+  try {
+    await startWorkflow({
+      flow_type: workflowForm.flow_type,
+      asset_id: workflowAsset.value.id,
+      title: workflowForm.title,
+      payload: {
+        reason: workflowForm.reason,
+        asset_name: workflowAsset.value.asset_name,
+        serial_number: workflowAsset.value.serial_number,
+        target_department: workflowForm.target_department,
+        target_owner: workflowForm.target_owner,
+        target_location: workflowForm.target_location
+      }
+    });
+    ElMessage.success('审批已发起');
+    workflowVisible.value = false;
+  } finally {
+    workflowSubmitting.value = false;
   }
 }
 

@@ -13,6 +13,7 @@ import (
 	"asset-core/internal/module/data"
 	"asset-core/internal/module/identity"
 	"asset-core/internal/module/verification"
+	"asset-core/internal/module/workflow"
 	"asset-core/internal/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -57,12 +58,18 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	if err := authService.Bootstrap(); err != nil {
 		deps.Logger.Fatal("auth bootstrap failed", logger.Error(err))
 	}
+	workflowRepo := workflow.NewRepository(deps.DB)
+	workflowService := workflow.NewService(workflowRepo, assetService)
+	if err := workflowService.Bootstrap(); err != nil {
+		deps.Logger.Fatal("workflow bootstrap failed", logger.Error(err))
+	}
 
 	assetCtl := controller.NewAssetController(assetService)
 	identityCtl := controller.NewIdentityController(identityService)
 	verificationCtl := controller.NewVerificationController(verificationService)
 	dataCtl := controller.NewDataController(dataService)
 	authCtl := controller.NewAuthController(authService)
+	workflowCtl := controller.NewWorkflowController(workflowService)
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "service": deps.Config.App.Name})
@@ -117,6 +124,17 @@ func NewRouter(deps Dependencies) *gin.Engine {
 			dataRoutes.GET("/import-tasks/:id", dataCtl.GetImportTask)
 			dataRoutes.GET("/import-tasks/:id/errors", dataCtl.ImportErrors)
 			dataRoutes.GET("/export/assets", dataCtl.ExportAssets)
+		}
+
+		workflowRoutes := v1.Group("/workflows")
+		workflowRoutes.Use(middleware.AuthRequired(authService))
+		{
+			workflowRoutes.GET("/definitions", middleware.RequirePermission(auth.PermissionWorkflowStart), workflowCtl.ListDefinitions)
+			workflowRoutes.PUT("/definitions", middleware.RequirePermission(auth.PermissionWorkflowConfig), workflowCtl.SaveDefinition)
+			workflowRoutes.POST("/instances", middleware.RequirePermission(auth.PermissionWorkflowStart), workflowCtl.Start)
+			workflowRoutes.GET("/instances", middleware.RequirePermission(auth.PermissionWorkflowStart), workflowCtl.ListInstances)
+			workflowRoutes.GET("/tasks", middleware.RequirePermission(auth.PermissionWorkflowApprove), workflowCtl.ListTasks)
+			workflowRoutes.POST("/tasks/:id/approve", middleware.RequirePermission(auth.PermissionWorkflowApprove), workflowCtl.Approve)
 		}
 	}
 

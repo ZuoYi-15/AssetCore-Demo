@@ -12,7 +12,7 @@
       </div>
 
       <nav class="nav">
-        <RouterLink v-for="item in navItems" :key="item.path" class="nav-link" :to="item.path">
+        <RouterLink v-for="item in visibleNavItems" :key="item.path" class="nav-link" :to="item.path">
           <component :is="item.icon" :size="18" />
           <span>{{ item.label }}</span>
         </RouterLink>
@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
-import { Database, FileStack, Fingerprint, Gauge, LogOut, RefreshCw, ShieldCheck, UserPlus, Workflow } from 'lucide-vue-next';
+import { ClipboardCheck, Database, FileStack, Fingerprint, Gauge, GitBranch, LogOut, RefreshCw, ShieldCheck, UserPlus, Workflow } from 'lucide-vue-next';
 import { health } from '../services/api';
 import { authState, clearSession, hasPermission } from '../services/auth';
 
@@ -59,7 +59,9 @@ const navItems = [
   { path: '/assets', label: '资产台账', icon: Database },
   { path: '/identities', label: '身份 ID', icon: Fingerprint },
   { path: '/verifications', label: '交叉验证', icon: Workflow },
-  { path: '/data', label: '数据管理', icon: FileStack }
+  { path: '/data', label: '数据管理', icon: FileStack },
+  { path: '/workflow-tasks', label: '审批任务', icon: ClipboardCheck, permission: 'workflow:approve' },
+  { path: '/workflow-config', label: '流程配置', icon: GitBranch, permission: 'workflow:config' }
 ];
 
 const titleMap: Record<string, string> = {
@@ -68,9 +70,12 @@ const titleMap: Record<string, string> = {
   identities: '身份 ID',
   verifications: '交叉验证',
   data: '数据管理',
-  register: '注册账号'
+  register: '注册账号',
+  'workflow-tasks': '审批任务',
+  'workflow-config': '流程配置'
 };
 
+const visibleNavItems = computed(() => navItems.filter((item) => !item.permission || hasPermission(item.permission)));
 const currentTitle = computed(() => titleMap[String(route.name)] || 'Asset-Core');
 const canRegisterUser = computed(() => hasPermission('user:create'));
 const currentUserLabel = computed(() => authState.user?.display_name || authState.user?.username || '未登录');

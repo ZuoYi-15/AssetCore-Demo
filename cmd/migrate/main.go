@@ -9,6 +9,7 @@ import (
 	"asset-core/internal/module/data"
 	"asset-core/internal/module/identity"
 	"asset-core/internal/module/verification"
+	"asset-core/internal/module/workflow"
 )
 
 func main() {
@@ -29,6 +30,10 @@ func main() {
 		&auth.Permission{},
 		&auth.UserRole{},
 		&auth.RolePermission{},
+		&workflow.Definition{},
+		&workflow.Node{},
+		&workflow.Instance{},
+		&workflow.Task{},
 	); err != nil {
 		panic(err)
 	}
