@@ -1,56 +1,49 @@
 <template>
-  <div class="content-grid">
-    <section class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">账号管理</div>
-          <div class="empty-hint">超级管理员可创建账号、查看用户权限，并修改用户信息与密码。</div>
-        </div>
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">账号管理</div>
+        <div class="empty-hint">超级管理员可创建账号、查看用户权限，并修改用户信息与密码。</div>
+      </div>
+      <div class="toolbar-right">
         <el-button :icon="RefreshCw" @click="loadUsers">刷新</el-button>
+        <el-button type="primary" :icon="UserPlus" @click="openCreate">新增账号</el-button>
       </div>
+    </div>
 
-      <el-table :data="users" v-loading="tableLoading" height="420">
-        <el-table-column prop="username" label="用户名" width="150" />
-        <el-table-column prop="display_name" label="显示名称" width="160" />
-        <el-table-column label="状态" width="110">
-          <template #default="{ row }">
-            <StatusPill :value="row.status" />
-          </template>
-        </el-table-column>
-        <el-table-column label="角色" width="170">
-          <template #default="{ row }">
-            <span class="tag-list">
-              <el-tag v-for="role in row.roles" :key="role" size="small">{{ roleLabel(role) }}</el-tag>
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="权限" min-width="360">
-          <template #default="{ row }">
-            <span class="permission-list">
-              <el-tag v-for="permission in row.permissions" :key="permission" size="small" type="info">
-                {{ permissionLabel(permission) }}
-              </el-tag>
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" :icon="Pencil" @click="openEdit(row)">修改</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </section>
+    <el-table :data="users" v-loading="tableLoading" height="560">
+      <el-table-column prop="username" label="用户名" width="150" />
+      <el-table-column prop="display_name" label="显示名称" width="160" />
+      <el-table-column label="状态" width="110">
+        <template #default="{ row }">
+          <StatusPill :value="row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column label="角色" width="170">
+        <template #default="{ row }">
+          <span class="tag-list">
+            <el-tag v-for="role in row.roles" :key="role" size="small">{{ roleLabel(role) }}</el-tag>
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="权限" min-width="360">
+        <template #default="{ row }">
+          <span class="permission-list">
+            <el-tag v-for="permission in row.permissions" :key="permission" size="small" type="info">
+              {{ permissionLabel(permission) }}
+            </el-tag>
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="100" fixed="right">
+        <template #default="{ row }">
+          <el-button size="small" :icon="Pencil" @click="openEdit(row)">修改</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
 
-    <section class="panel register-panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">{{ editingUser ? '修改账号' : '创建账号' }}</div>
-          <div class="empty-hint">{{ editingUser ? '密码留空则不修改原密码。' : '创建管理员或普通用户账号。' }}</div>
-        </div>
-        <el-button v-if="editingUser" @click="resetForm">新建账号</el-button>
-      </div>
-
-      <el-form class="register-form" label-position="top" @submit.prevent="submit">
+    <el-dialog v-model="dialogVisible" :title="editingUser ? '修改账号' : '新增账号'" width="720px">
+      <el-form label-position="top" @submit.prevent="submit">
         <div class="form-grid">
           <el-form-item label="用户名">
             <el-input v-model="form.username" autocomplete="new-username" />
@@ -85,14 +78,15 @@
             </el-select>
           </el-form-item>
         </div>
-        <div class="register-actions">
-          <el-button type="primary" :icon="editingUser ? Save : UserPlus" :loading="loading" native-type="submit" @click="submit">
-            {{ editingUser ? '保存修改' : '创建账号' }}
-          </el-button>
-        </div>
       </el-form>
-    </section>
-  </div>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :icon="editingUser ? Save : UserPlus" :loading="loading" @click="submit">
+          {{ editingUser ? '保存修改' : '创建账号' }}
+        </el-button>
+      </template>
+    </el-dialog>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -107,6 +101,7 @@ type AccountForm = RegisterPayload & Pick<UpdateUserPayload, 'status' | 'permiss
 
 const loading = ref(false);
 const tableLoading = ref(false);
+const dialogVisible = ref(false);
 const users = ref<AuthUser[]>([]);
 const permissions = ref<Permission[]>([]);
 const editingUser = ref<AuthUser | null>(null);
@@ -132,6 +127,11 @@ async function loadPermissions() {
   permissions.value = await listPermissions();
 }
 
+function openCreate() {
+  resetForm();
+  dialogVisible.value = true;
+}
+
 function openEdit(user: AuthUser) {
   editingUser.value = user;
   form.username = user.username;
@@ -140,6 +140,7 @@ function openEdit(user: AuthUser) {
   form.role_code = (user.roles[0] || 'user') as AccountForm['role_code'];
   form.status = (user.status || 'active') as AccountForm['status'];
   form.permission_codes = [...user.permissions];
+  dialogVisible.value = true;
 }
 
 function resetForm() {
@@ -177,6 +178,7 @@ async function submit() {
       await registerUser(form);
       ElMessage.success('账号创建成功');
     }
+    dialogVisible.value = false;
     resetForm();
     await loadUsers();
   } finally {

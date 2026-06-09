@@ -20,7 +20,7 @@
           <el-input v-model="form.password" type="password" autocomplete="current-password" show-password />
         </el-form-item>
         <el-button type="primary" :loading="loading" native-type="submit" @click="submit">登录</el-button>
-        <div class="auth-hint">默认超级管理员：superadmin / Admin@123456</div>
+        <div class="auth-hint">默认超级管理员账号：SuperAdmin / Admin@123456</div>
       </el-form>
     </section>
   </main>
@@ -35,7 +35,7 @@ import { login } from '../services/auth';
 
 const router = useRouter();
 const loading = ref(false);
-const form = reactive({ username: 'superadmin', password: 'Admin@123456' });
+const form = reactive({ username: 'SuperAdmin', password: 'Admin@123456' });
 
 async function submit() {
   if (!form.username || !form.password) {

@@ -42,15 +42,35 @@ func (s *Service) Bootstrap() error {
 		return err
 	}
 	if count > 0 {
-		return nil
+		return s.ensureDefaultSuperAdminUsername()
 	}
 	_, err = s.Register(RegisterRequest{
-		Username:    "superadmin",
+		Username:    "SuperAdmin",
 		Password:    "Admin@123456",
 		DisplayName: "Super Administrator",
 		RoleCode:    RoleSuperAdmin,
 	})
 	return err
+}
+
+func (s *Service) ensureDefaultSuperAdminUsername() error {
+	if _, err := s.repo.FindUserByUsername("SuperAdmin"); err == nil {
+		return nil
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	user, err := s.repo.FindUserByUsername("superadmin")
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	user.Username = "SuperAdmin"
+	if strings.TrimSpace(user.DisplayName) == "" {
+		user.DisplayName = "Super Administrator"
+	}
+	return s.repo.UpdateUser(user)
 }
 
 func (s *Service) Register(req RegisterRequest) (*UserProfile, error) {
