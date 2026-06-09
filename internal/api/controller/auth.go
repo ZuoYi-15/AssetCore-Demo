@@ -49,6 +49,42 @@ func (ctl *AuthController) Register(c *gin.Context) {
 	response.Created(c, user)
 }
 
+func (ctl *AuthController) ListUsers(c *gin.Context) {
+	users, err := ctl.service.ListUsers()
+	if err != nil {
+		handleAuthError(c, err)
+		return
+	}
+	response.OK(c, users)
+}
+
+func (ctl *AuthController) ListPermissions(c *gin.Context) {
+	items, err := ctl.service.ListPermissions()
+	if err != nil {
+		handleAuthError(c, err)
+		return
+	}
+	response.OK(c, items)
+}
+
+func (ctl *AuthController) UpdateUser(c *gin.Context) {
+	id, ok := parseID(c, "id")
+	if !ok {
+		return
+	}
+	var req auth.UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, err.Error())
+		return
+	}
+	user, err := ctl.service.UpdateUser(id, req)
+	if err != nil {
+		handleAuthError(c, err)
+		return
+	}
+	response.OK(c, user)
+}
+
 func (ctl *AuthController) Me(c *gin.Context) {
 	value, ok := c.Get(middleware.ClaimsKey)
 	if !ok {
@@ -78,6 +114,8 @@ func handleAuthError(c *gin.Context, err error) {
 		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, "unsupported role")
 	case errors.Is(err, auth.ErrWeakPassword):
 		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, "password must be at least 8 characters")
+	case errors.Is(err, auth.ErrInvalidUserStatus):
+		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, "invalid user status")
 	case errors.Is(err, auth.ErrUserExists):
 		response.Fail(c, http.StatusConflict, apperrors.CodeAssetConflict, "username already exists")
 	case errors.Is(err, gorm.ErrRecordNotFound):

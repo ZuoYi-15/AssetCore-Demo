@@ -6,16 +6,27 @@ type LoginRequest struct {
 }
 
 type RegisterRequest struct {
-	Username    string `json:"username" binding:"required"`
-	Password    string `json:"password" binding:"required"`
-	DisplayName string `json:"display_name"`
-	RoleCode    string `json:"role_code" binding:"required"`
+	Username        string   `json:"username" binding:"required"`
+	Password        string   `json:"password" binding:"required"`
+	DisplayName     string   `json:"display_name"`
+	RoleCode        string   `json:"role_code" binding:"required"`
+	PermissionCodes []string `json:"permission_codes"`
+}
+
+type UpdateUserRequest struct {
+	Username        string   `json:"username" binding:"required"`
+	Password        string   `json:"password"`
+	DisplayName     string   `json:"display_name"`
+	Status          string   `json:"status" binding:"required"`
+	RoleCode        string   `json:"role_code" binding:"required"`
+	PermissionCodes []string `json:"permission_codes"`
 }
 
 type UserProfile struct {
 	ID          uint64   `json:"id"`
 	Username    string   `json:"username"`
 	DisplayName string   `json:"display_name"`
+	Status      string   `json:"status"`
 	Roles       []string `json:"roles"`
 	Permissions []string `json:"permissions"`
 }

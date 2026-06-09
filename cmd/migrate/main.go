@@ -29,6 +29,7 @@ func main() {
 		&auth.Role{},
 		&auth.Permission{},
 		&auth.UserRole{},
+		&auth.UserPermission{},
 		&auth.RolePermission{},
 		&workflow.Definition{},
 		&workflow.Node{},

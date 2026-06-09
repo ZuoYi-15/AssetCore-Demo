@@ -63,6 +63,15 @@ type UserRole struct {
 
 func (UserRole) TableName() string { return "auth_user_role" }
 
+type UserPermission struct {
+	ID           uint64    `gorm:"primaryKey" json:"id"`
+	UserID       uint64    `gorm:"uniqueIndex:idx_user_permission;not null" json:"user_id"`
+	PermissionID uint64    `gorm:"uniqueIndex:idx_user_permission;not null" json:"permission_id"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+func (UserPermission) TableName() string { return "auth_user_permission" }
+
 type RolePermission struct {
 	ID           uint64    `gorm:"primaryKey" json:"id"`
 	RoleID       uint64    `gorm:"uniqueIndex:idx_role_permission;not null" json:"role_id"`

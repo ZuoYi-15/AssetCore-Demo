@@ -254,6 +254,26 @@ a {
   color: #175cd3;
 }
 
+.status-approved {
+  background: #e7f7ef;
+  color: #087443;
+}
+
+.status-rejected {
+  background: #fff1f3;
+  color: #c01048;
+}
+
+.status-inactive {
+  background: #f2f4f7;
+  color: #667085;
+}
+
+.status-disabled {
+  background: #f2f4f7;
+  color: #667085;
+}
+
 .status-warning,
 .status-weak,
 .status-discovered {
@@ -297,6 +317,171 @@ a {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
   gap: 16px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.chart-panel {
+  min-height: 300px;
+}
+
+.donut-layout {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  align-items: center;
+  gap: 22px;
+}
+
+.donut-chart {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.08);
+}
+
+.donut-chart::after {
+  content: "";
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: #ffffff;
+  position: absolute;
+  box-shadow: 0 0 0 1px #e5e7eb;
+}
+
+.donut-center {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+}
+
+.donut-center strong {
+  font-size: 28px;
+  color: #111827;
+}
+
+.donut-center span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.chart-legend {
+  display: grid;
+  gap: 10px;
+}
+
+.legend-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  color: #344054;
+  font-size: 13px;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.bar-list {
+  display: grid;
+  gap: 14px;
+}
+
+.bar-row {
+  display: grid;
+  gap: 7px;
+}
+
+.bar-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #344054;
+}
+
+.bar-track {
+  height: 9px;
+  border-radius: 999px;
+  background: #eef2f6;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #1f9d8a;
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.trust-item {
+  min-height: 132px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  background: #fbfcfe;
+}
+
+.trust-value {
+  font-size: 28px;
+  font-weight: 760;
+  color: #111827;
+}
+
+.trust-percent {
+  color: #667085;
+  font-size: 12px;
+}
+
+.radar-wrap {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+}
+
+.radar-chart {
+  width: min(360px, 100%);
+  height: 230px;
+}
+
+.radar-grid {
+  fill: none;
+  stroke: #cbd5e1;
+  stroke-width: 1;
+}
+
+.radar-grid.inner {
+  stroke: #e5e7eb;
+}
+
+.radar-area {
+  fill: rgba(31, 157, 138, 0.22);
+  stroke: #1f9d8a;
+  stroke-width: 2;
+}
+
+.radar-labels {
+  fill: #667085;
+  font-size: 11px;
 }
 
 .empty-hint {
@@ -400,4 +585,11 @@ a {
   gap: 4px;
   font-size: 13px;
   color: #475467;
+}
+
+.tag-list,
+.permission-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }

@@ -18,6 +18,7 @@ var (
 	ErrUnsupportedRole   = errors.New("unsupported role")
 	ErrUserExists        = errors.New("username already exists")
 	ErrWeakPassword      = errors.New("password must be at least 8 characters")
+	ErrInvalidUserStatus = errors.New("invalid user status")
 )
 
 type Service struct {
@@ -82,7 +83,79 @@ func (s *Service) Register(req RegisterRequest) (*UserProfile, error) {
 	if err := s.repo.AssignRole(user.ID, req.RoleCode); err != nil {
 		return nil, err
 	}
+	if err := s.repo.ReplacePermissions(user.ID, req.PermissionCodes); err != nil {
+		return nil, err
+	}
 	return s.Profile(user.ID)
+}
+
+func (s *Service) ListUsers() ([]UserProfile, error) {
+	users, err := s.repo.ListUsers()
+	if err != nil {
+		return nil, err
+	}
+	items := make([]UserProfile, 0, len(users))
+	for _, user := range users {
+		profile, err := s.Profile(user.ID)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, *profile)
+	}
+	return items, nil
+}
+
+func (s *Service) UpdateUser(id uint64, req UpdateUserRequest) (*UserProfile, error) {
+	req.RoleCode = strings.TrimSpace(req.RoleCode)
+	if req.RoleCode != RoleSuperAdmin && req.RoleCode != RoleAdmin && req.RoleCode != RoleUser {
+		return nil, ErrUnsupportedRole
+	}
+	req.Status = strings.TrimSpace(req.Status)
+	if req.Status != "active" && req.Status != "disabled" {
+		return nil, ErrInvalidUserStatus
+	}
+	username := strings.TrimSpace(req.Username)
+	if username == "" {
+		return nil, ErrWeakPassword
+	}
+	user, err := s.repo.FindUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if user.Username != username {
+		if _, err := s.repo.FindUserByUsername(username); err == nil {
+			return nil, ErrUserExists
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	}
+	user.Username = username
+	user.DisplayName = strings.TrimSpace(req.DisplayName)
+	user.Status = req.Status
+	if req.Password != "" {
+		if len(req.Password) < 8 {
+			return nil, ErrWeakPassword
+		}
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, err
+		}
+		user.PasswordHash = string(passwordHash)
+	}
+	if err := s.repo.UpdateUser(user); err != nil {
+		return nil, err
+	}
+	if err := s.repo.ReplaceRole(user.ID, req.RoleCode); err != nil {
+		return nil, err
+	}
+	if err := s.repo.ReplacePermissions(user.ID, req.PermissionCodes); err != nil {
+		return nil, err
+	}
+	return s.Profile(user.ID)
+}
+
+func (s *Service) ListPermissions() ([]Permission, error) {
+	return s.repo.ListPermissions()
 }
 
 func (s *Service) Login(req LoginRequest) (*LoginResponse, error) {
@@ -134,6 +207,7 @@ func (s *Service) Profile(userID uint64) (*UserProfile, error) {
 		ID:          user.ID,
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
+		Status:      user.Status,
 		Roles:       roles,
 		Permissions: permissions,
 	}, nil

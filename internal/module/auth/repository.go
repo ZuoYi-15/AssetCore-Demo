@@ -16,11 +16,21 @@ func NewRepository(db *gorm.DB) *Repository {
 }
 
 func (r *Repository) AutoMigrate() error {
-	return r.db.AutoMigrate(&User{}, &Role{}, &Permission{}, &UserRole{}, &RolePermission{})
+	return r.db.AutoMigrate(&User{}, &Role{}, &Permission{}, &UserRole{}, &UserPermission{}, &RolePermission{})
 }
 
 func (r *Repository) CreateUser(user *User) error {
 	return r.db.Create(user).Error
+}
+
+func (r *Repository) UpdateUser(user *User) error {
+	return r.db.Save(user).Error
+}
+
+func (r *Repository) ListUsers() ([]User, error) {
+	var users []User
+	err := r.db.Order("id ASC").Find(&users).Error
+	return users, err
 }
 
 func (r *Repository) FindUserByUsername(username string) (*User, error) {
@@ -75,6 +85,12 @@ func (r *Repository) FindPermissionByCode(code string) (*Permission, error) {
 	return &permission, nil
 }
 
+func (r *Repository) ListPermissions() ([]Permission, error) {
+	var items []Permission
+	err := r.db.Order("id ASC").Find(&items).Error
+	return items, err
+}
+
 func (r *Repository) AssignRole(userID uint64, roleCode string) error {
 	role, err := r.FindRoleByCode(roleCode)
 	if err != nil {
@@ -84,6 +100,41 @@ func (r *Repository) AssignRole(userID uint64, roleCode string) error {
 		UserID: userID,
 		RoleID: role.ID,
 	}).Error
+}
+
+func (r *Repository) ReplaceRole(userID uint64, roleCode string) error {
+	role, err := r.FindRoleByCode(roleCode)
+	if err != nil {
+		return err
+	}
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id = ?", userID).Delete(&UserRole{}).Error; err != nil {
+			return err
+		}
+		return tx.Create(&UserRole{UserID: userID, RoleID: role.ID}).Error
+	})
+}
+
+func (r *Repository) ReplacePermissions(userID uint64, permissionCodes []string) error {
+	permissions := make([]Permission, 0, len(permissionCodes))
+	for _, code := range permissionCodes {
+		permission, err := r.FindPermissionByCode(code)
+		if err != nil {
+			return err
+		}
+		permissions = append(permissions, *permission)
+	}
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id = ?", userID).Delete(&UserPermission{}).Error; err != nil {
+			return err
+		}
+		for _, permission := range permissions {
+			if err := tx.Create(&UserPermission{UserID: userID, PermissionID: permission.ID}).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (r *Repository) AssignPermission(roleCode, permissionCode string) error {
@@ -114,11 +165,42 @@ func (r *Repository) UserRoles(userID uint64) ([]string, error) {
 
 func (r *Repository) UserPermissions(userID uint64) ([]string, error) {
 	var permissions []string
-	err := r.db.Table("auth_permission").
+	rolePermissions := r.db.Table("auth_permission").
 		Select("DISTINCT auth_permission.code").
 		Joins("JOIN auth_role_permission ON auth_role_permission.permission_id = auth_permission.id").
 		Joins("JOIN auth_user_role ON auth_user_role.role_id = auth_role_permission.role_id").
 		Where("auth_user_role.user_id = ?", userID).
+		Scan(&permissions).Error
+	if rolePermissions != nil {
+		return nil, rolePermissions
+	}
+	var direct []string
+	err := r.db.Table("auth_permission").
+		Select("DISTINCT auth_permission.code").
+		Joins("JOIN auth_user_permission ON auth_user_permission.permission_id = auth_permission.id").
+		Where("auth_user_permission.user_id = ?", userID).
+		Scan(&direct).Error
+	if err != nil {
+		return nil, err
+	}
+	seen := map[string]bool{}
+	merged := make([]string, 0, len(permissions)+len(direct))
+	for _, permission := range append(permissions, direct...) {
+		if !seen[permission] {
+			seen[permission] = true
+			merged = append(merged, permission)
+		}
+	}
+	permissions = merged
+	return permissions, err
+}
+
+func (r *Repository) UserDirectPermissions(userID uint64) ([]string, error) {
+	var permissions []string
+	err := r.db.Table("auth_permission").
+		Select("DISTINCT auth_permission.code").
+		Joins("JOIN auth_user_permission ON auth_user_permission.permission_id = auth_permission.id").
+		Where("auth_user_permission.user_id = ?", userID).
 		Order("auth_permission.code ASC").
 		Scan(&permissions).Error
 	return permissions, err

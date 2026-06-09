@@ -30,7 +30,8 @@
         <el-table-column prop="created_at" label="创建时间" width="190" />
         <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" :icon="CircleAlert" @click="openErrors(row.id)">错误</el-button>
+            <el-button v-if="row.failed_count > 0" size="small" :icon="CircleAlert" @click="openErrors(row.id)">错误</el-button>
+            <span v-else class="empty-hint">无错误</span>
           </template>
         </el-table-column>
       </el-table>

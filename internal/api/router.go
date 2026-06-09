@@ -83,6 +83,9 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		authRoutes.Use(middleware.AuthRequired(authService))
 		authRoutes.GET("/auth/me", authCtl.Me)
 		authRoutes.POST("/auth/register", middleware.RequirePermission(auth.PermissionUserCreate), authCtl.Register)
+		authRoutes.GET("/auth/users", middleware.RequirePermission(auth.PermissionUserCreate), authCtl.ListUsers)
+		authRoutes.PUT("/auth/users/:id", middleware.RequirePermission(auth.PermissionUserCreate), authCtl.UpdateUser)
+		authRoutes.GET("/auth/permissions", middleware.RequirePermission(auth.PermissionUserCreate), authCtl.ListPermissions)
 
 		assets := v1.Group("/assets")
 		assets.Use(middleware.AuthRequired(authService))

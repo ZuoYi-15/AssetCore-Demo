@@ -167,6 +167,14 @@ CREATE TABLE IF NOT EXISTS auth_user_role (
   UNIQUE KEY idx_user_role (user_id, role_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS auth_user_permission (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NOT NULL,
+  permission_id BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME(3),
+  UNIQUE KEY idx_user_permission (user_id, permission_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS auth_role_permission (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   role_id BIGINT UNSIGNED NOT NULL,

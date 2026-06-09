@@ -1,6 +1,6 @@
 import { reactive } from 'vue';
 import { http, unwrap } from './http';
-import type { AuthUser, LoginResponse, RegisterPayload } from '../types/api';
+import type { AuthUser, LoginResponse, Permission, RegisterPayload, UpdateUserPayload } from '../types/api';
 
 const TOKEN_KEY = 'asset_core_token';
 const USER_KEY = 'asset_core_user';
@@ -67,5 +67,20 @@ export async function loadProfile() {
 
 export async function registerUser(payload: RegisterPayload) {
   const res = await http.post('/api/v1/auth/register', payload);
+  return unwrap<AuthUser>(res.data);
+}
+
+export async function listUsers() {
+  const res = await http.get('/api/v1/auth/users');
+  return unwrap<AuthUser[]>(res.data);
+}
+
+export async function listPermissions() {
+  const res = await http.get('/api/v1/auth/permissions');
+  return unwrap<Permission[]>(res.data);
+}
+
+export async function updateUser(id: number, payload: UpdateUserPayload) {
+  const res = await http.put(`/api/v1/auth/users/${id}`, payload);
   return unwrap<AuthUser>(res.data);
 }

@@ -19,14 +19,18 @@ const label = computed(() => {
     abnormal: '异常',
     retired: '已退役',
     active: '启用',
-    pending: '待处理',
+    inactive: '禁用',
+    pending: '待审批',
+    approved: '已通过',
+    rejected: '已驳回',
     completed: '已完成',
     failed: '失败',
     passed: '通过',
-    warning: '告警',
+    warning: '警告',
     strong: '强身份',
     medium: '中身份',
-    weak: '弱身份'
+    weak: '弱身份',
+    running: '运行中'
   };
   return map[normalized.value] || normalized.value || '未知';
 });
