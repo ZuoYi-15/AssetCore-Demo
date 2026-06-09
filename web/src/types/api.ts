@@ -122,6 +122,22 @@ export interface VerificationTask {
   updated_at: string;
 }
 
+export interface VerificationRecord {
+  id: number;
+  task_no: string;
+  asset_id: number;
+  asset_name: string;
+  asset_type: string;
+  identity_id: string;
+  serial_number: string;
+  owner_department: string;
+  status: string;
+  score: number;
+  result: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface VerificationConflict {
   id: number;
   task_id: number;

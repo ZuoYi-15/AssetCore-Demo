@@ -10,6 +10,7 @@ import type {
   ImportTask,
   PageResult,
   StartWorkflowPayload,
+  VerificationRecord,
   VerificationResult,
   WorkflowDefinition,
   WorkflowDefinitionPayload,
@@ -100,6 +101,11 @@ export async function listIdentityFeatures(identityID: string) {
 export async function createVerification(assetID: number) {
   const res = await http.post('/api/v1/verifications', { asset_id: assetID });
   return unwrap<VerificationResult>(res.data);
+}
+
+export async function listVerifications(params: Record<string, string | number>) {
+  const res = await http.get('/api/v1/verifications', { params });
+  return unwrap<PageResult<VerificationRecord>>(res.data);
 }
 
 export async function getVerification(id: number) {

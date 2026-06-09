@@ -40,7 +40,7 @@ func (r *Repository) List(q Query, offset, limit int) ([]Asset, int64, error) {
 	db := r.db.Model(&Asset{})
 	if q.Keyword != "" {
 		like := "%" + q.Keyword + "%"
-		db = db.Where("asset_name LIKE ? OR serial_number LIKE ? OR mac_address LIKE ? OR ip_address LIKE ? OR hostname LIKE ?", like, like, like, like, like)
+		db = db.Where("asset_name LIKE ? OR serial_number LIKE ? OR mac_address LIKE ? OR ip_address LIKE ? OR hostname LIKE ? OR identity_id LIKE ?", like, like, like, like, like, like)
 	}
 	if q.Status != "" {
 		db = db.Where("status = ?", q.Status)

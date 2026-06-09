@@ -5,6 +5,7 @@ import (
 
 	"asset-core/internal/module/verification"
 	apperrors "asset-core/internal/pkg/errors"
+	"asset-core/internal/pkg/pagination"
 	"asset-core/internal/pkg/response"
 
 	"github.com/gin-gonic/gin"
@@ -30,6 +31,20 @@ func (ctl *VerificationController) Create(c *gin.Context) {
 		return
 	}
 	response.Created(c, item)
+}
+
+func (ctl *VerificationController) List(c *gin.Context) {
+	page := pagination.FromQuery(c)
+	items, total, err := ctl.service.List(verification.Query{
+		Keyword: c.Query("keyword"),
+		Result:  c.Query("result"),
+		Status:  c.Query("status"),
+	}, page.Offset(), page.PageSize)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	response.OK(c, pagination.Result{Items: items, Page: page.Page, PageSize: page.PageSize, Total: total})
 }
 
 func (ctl *VerificationController) Get(c *gin.Context) {

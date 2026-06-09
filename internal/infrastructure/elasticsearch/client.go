@@ -96,7 +96,7 @@ func buildAssetQuery(q asset.Query, offset, limit int) map[string]interface{} {
 		must = append(must, map[string]interface{}{
 			"multi_match": map[string]interface{}{
 				"query":  q.Keyword,
-				"fields": []string{"asset_name^3", "serial_number^2", "mac_address", "ip_address", "hostname", "vendor", "model", "owner_user", "owner_department", "location"},
+				"fields": []string{"asset_name^3", "serial_number^2", "identity_id^2", "mac_address", "ip_address", "hostname", "vendor", "model", "owner_user", "owner_department", "location"},
 			},
 		})
 	}

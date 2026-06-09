@@ -3,11 +3,11 @@
     <section class="panel">
       <div class="toolbar">
         <div class="toolbar-left">
-          <el-select v-model="status" style="width: 160px" @change="load">
+          <el-select v-model="status" clearable placeholder="筛选审批状态" style="width: 160px" @change="load">
+            <el-option label="全部状态" value="" />
             <el-option label="待审批" value="pending" />
             <el-option label="已通过" value="approved" />
             <el-option label="已驳回" value="rejected" />
-            <el-option label="全部" value="" />
           </el-select>
         </div>
         <div class="toolbar-right">
@@ -91,7 +91,7 @@ const submitting = ref(false);
 const detailVisible = ref(false);
 const currentTask = ref<WorkflowTask | null>(null);
 const comment = ref('');
-const status = ref('pending');
+const status = ref('');
 const page = ref(1);
 const pageSize = ref(20);
 const total = ref(0);

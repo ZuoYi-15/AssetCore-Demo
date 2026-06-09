@@ -116,6 +116,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		verifications.Use(middleware.AuthRequired(authService))
 		{
 			verifications.POST("", verificationCtl.Create)
+			verifications.GET("", verificationCtl.List)
 			verifications.GET("/:id", verificationCtl.Get)
 		}
 

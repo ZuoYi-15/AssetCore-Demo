@@ -1,6 +1,10 @@
 package verification
 
-import "gorm.io/gorm"
+import (
+	"strings"
+
+	"gorm.io/gorm"
+)
 
 type Repository struct {
 	db *gorm.DB
@@ -24,6 +28,44 @@ func (r *Repository) FindTask(id uint64) (*Task, error) {
 		return nil, err
 	}
 	return &task, nil
+}
+
+func (r *Repository) ListTasks(q Query, offset, limit int) ([]TaskRecord, int64, error) {
+	db := r.db.Table("asset_verification_task").
+		Select(`asset_verification_task.id,
+			asset_verification_task.task_no,
+			asset_verification_task.asset_id,
+			asset.asset_name,
+			asset.asset_type,
+			asset.identity_id,
+			asset.serial_number,
+			asset.owner_department,
+			asset_verification_task.status,
+			asset_verification_task.score,
+			asset_verification_task.result,
+			asset_verification_task.created_at,
+			asset_verification_task.updated_at`).
+		Joins("LEFT JOIN asset ON asset.id = asset_verification_task.asset_id")
+	if strings.TrimSpace(q.Keyword) != "" {
+		like := "%" + strings.TrimSpace(q.Keyword) + "%"
+		db = db.Where("asset.asset_name LIKE ? OR asset.serial_number LIKE ? OR asset.identity_id LIKE ? OR asset_verification_task.task_no LIKE ?", like, like, like, like)
+	}
+	if strings.TrimSpace(q.Result) != "" {
+		db = db.Where("asset_verification_task.result = ?", strings.TrimSpace(q.Result))
+	}
+	if strings.TrimSpace(q.Status) != "" {
+		db = db.Where("asset_verification_task.status = ?", strings.TrimSpace(q.Status))
+	}
+
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var items []TaskRecord
+	if err := db.Order("asset_verification_task.id DESC").Offset(offset).Limit(limit).Scan(&items).Error; err != nil {
+		return nil, 0, err
+	}
+	return items, total, nil
 }
 
 func (r *Repository) LatestByAsset(assetID uint64) (*Task, error) {

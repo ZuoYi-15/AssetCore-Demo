@@ -61,6 +61,10 @@ func (s *Service) Get(taskID uint64) (*ResultResponse, error) {
 	return &ResultResponse{Task: *task, Conflicts: conflicts}, nil
 }
 
+func (s *Service) List(q Query, offset, limit int) ([]TaskRecord, int64, error) {
+	return s.repo.ListTasks(q, offset, limit)
+}
+
 func (s *Service) LatestByAsset(assetID uint64) (*ResultResponse, error) {
 	task, err := s.repo.LatestByAsset(assetID)
 	if err != nil {
