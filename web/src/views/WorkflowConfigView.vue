@@ -1,63 +1,54 @@
 <template>
-  <div class="content-grid">
-    <section class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">审批流程列表</div>
-          <div class="empty-hint">已配置的采购、调拨、报废审批流会在这里展示；禁用后可删除。</div>
-        </div>
-        <div class="toolbar-right">
-          <el-button :icon="Plus" @click="newDefinition">新建流程</el-button>
-          <el-button :icon="RefreshCw" @click="load">刷新</el-button>
-        </div>
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">审批流程列表</div>
+        <div class="empty-hint">已配置的采购、调拨、报废审批流会在这里展示；禁用后可删除。</div>
       </div>
-
-      <el-table :data="definitions" v-loading="loading" border>
-        <el-table-column label="流程类型" width="130">
-          <template #default="{ row }">{{ flowTypeLabel(row.flow_type) }}</template>
-        </el-table-column>
-        <el-table-column prop="name" label="流程名称" min-width="180" />
-        <el-table-column label="状态" width="100">
-          <template #default="{ row }">
-            <StatusPill :value="row.status" />
-          </template>
-        </el-table-column>
-        <el-table-column label="节点" min-width="260">
-          <template #default="{ row }">
-            <span class="workflow-node-list">
-              <span v-for="node in row.nodes" :key="node.id || node.sort_order">
-                {{ node.sort_order }}. {{ node.node_name }} / {{ roleLabel(node.approver_role) }}
-              </span>
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
-          <template #default="{ row }">
-            <span class="table-actions">
-              <el-button size="small" :icon="Pencil" @click="editDefinition(row)">修改</el-button>
-              <el-button
-                size="small"
-                type="danger"
-                :icon="Trash2"
-                :disabled="row.status !== 'inactive'"
-                @click="removeDefinition(row)"
-              >
-                删除
-              </el-button>
-            </span>
-          </template>
-        </el-table-column>
-      </el-table>
-    </section>
-
-    <section class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">{{ editingID ? '修改审批流' : '新建审批流' }}</div>
-          <div class="empty-hint">流程禁用后不会再允许发起新的审批，但仍可在这里修改配置或删除。</div>
-        </div>
+      <div class="toolbar-right">
+        <el-button :icon="RefreshCw" @click="load">刷新</el-button>
+        <el-button type="primary" :icon="Plus" @click="openCreate">新建流程</el-button>
       </div>
+    </div>
 
+    <el-table :data="definitions" v-loading="loading" border>
+      <el-table-column label="流程类型" width="130">
+        <template #default="{ row }">{{ flowTypeLabel(row.flow_type) }}</template>
+      </el-table-column>
+      <el-table-column prop="name" label="流程名称" min-width="180" />
+      <el-table-column label="状态" width="100">
+        <template #default="{ row }">
+          <StatusPill :value="row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column label="节点" min-width="260">
+        <template #default="{ row }">
+          <span class="workflow-node-list">
+            <span v-for="node in row.nodes" :key="node.id || node.sort_order">
+              {{ node.sort_order }}. {{ node.node_name }} / {{ roleLabel(node.approver_role) }}
+            </span>
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="180" fixed="right">
+        <template #default="{ row }">
+          <span class="table-actions">
+            <el-button size="small" :icon="Pencil" @click="openEdit(row)">修改</el-button>
+            <el-button
+              size="small"
+              type="danger"
+              :icon="Trash2"
+              :disabled="row.status !== 'inactive'"
+              @click="removeDefinition(row)"
+            >
+              删除
+            </el-button>
+          </span>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <el-dialog v-model="dialogVisible" :title="editingID ? '修改审批流' : '新建审批流'" width="860px">
       <el-form label-position="top" class="workflow-form">
         <div class="form-grid">
           <el-form-item label="流程类型">
@@ -108,12 +99,12 @@
         </el-table-column>
       </el-table>
 
-      <div class="form-actions">
-        <el-button @click="newDefinition">清空</el-button>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" :icon="Save" :loading="saving" @click="save">保存配置</el-button>
-      </div>
-    </section>
-  </div>
+      </template>
+    </el-dialog>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -133,6 +124,7 @@ const flowTypes: Array<{ value: WorkflowType; label: string }> = [
 const definitions = ref<WorkflowDefinition[]>([]);
 const loading = ref(false);
 const saving = ref(false);
+const dialogVisible = ref(false);
 const editingID = ref<number | null>(null);
 const draft = reactive<{
   flow_type: WorkflowType;
@@ -150,15 +142,12 @@ async function load() {
   loading.value = true;
   try {
     definitions.value = await listWorkflowDefinitions();
-    if (!editingID.value && definitions.value.length > 0) {
-      editDefinition(definitions.value[0]);
-    }
   } finally {
     loading.value = false;
   }
 }
 
-function editDefinition(item: WorkflowDefinition) {
+function openEdit(item: WorkflowDefinition) {
   editingID.value = item.id;
   draft.flow_type = item.flow_type;
   draft.name = item.name;
@@ -172,15 +161,17 @@ function editDefinition(item: WorkflowDefinition) {
     draft.nodes = [{ node_name: '管理员审批', approver_role: 'admin', sort_order: 1 }];
   }
   sortNodes();
+  dialogVisible.value = true;
 }
 
-function newDefinition() {
+function openCreate() {
   editingID.value = null;
   const firstMissing = flowTypes.find((flow) => !definitions.value.some((item) => item.flow_type === flow.value)) || flowTypes[0];
   draft.flow_type = firstMissing.value;
   draft.name = firstMissing.label;
   draft.status = 'active';
   draft.nodes = [{ node_name: '管理员审批', approver_role: 'admin', sort_order: 1 }];
+  dialogVisible.value = true;
 }
 
 function addNode() {
@@ -214,7 +205,8 @@ async function save() {
     });
     ElMessage.success('流程配置已保存');
     await load();
-    editDefinition(saved);
+    editingID.value = saved.id;
+    dialogVisible.value = false;
   } finally {
     saving.value = false;
   }

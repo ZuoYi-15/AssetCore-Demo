@@ -23,6 +23,7 @@ type User struct {
 	Username     string    `gorm:"size:64;uniqueIndex;not null" json:"username"`
 	PasswordHash string    `gorm:"size:255;not null" json:"-"`
 	DisplayName  string    `gorm:"size:128" json:"display_name"`
+	Email        string    `gorm:"size:128;index" json:"email"`
 	Status       string    `gorm:"size:32;index;not null;default:active" json:"status"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

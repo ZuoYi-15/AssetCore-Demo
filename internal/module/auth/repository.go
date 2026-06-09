@@ -27,9 +27,22 @@ func (r *Repository) UpdateUser(user *User) error {
 	return r.db.Save(user).Error
 }
 
-func (r *Repository) ListUsers() ([]User, error) {
+func (r *Repository) ListUsers(q UserQuery) ([]User, error) {
 	var users []User
-	err := r.db.Order("id ASC").Find(&users).Error
+	db := r.db.Model(&User{})
+	if q.Keyword != "" {
+		like := "%" + q.Keyword + "%"
+		db = db.Where("username LIKE ? OR display_name LIKE ? OR email LIKE ?", like, like, like)
+	}
+	if q.Status != "" {
+		db = db.Where("status = ?", q.Status)
+	}
+	if q.Role != "" {
+		db = db.Joins("JOIN auth_user_role ON auth_user_role.user_id = user_account.id").
+			Joins("JOIN auth_role ON auth_role.id = auth_user_role.role_id").
+			Where("auth_role.code = ?", q.Role)
+	}
+	err := db.Order("user_account.id ASC").Find(&users).Error
 	return users, err
 }
 

@@ -11,9 +11,28 @@
       </div>
     </div>
 
+    <div class="toolbar user-filter">
+      <div class="toolbar-left">
+        <el-input v-model="query.keyword" clearable placeholder="搜索用户名、显示名称、邮箱" style="width: 260px" @keyup.enter="loadUsers" />
+        <el-select v-model="query.status" clearable placeholder="状态" style="width: 140px">
+          <el-option label="启用" value="active" />
+          <el-option label="禁用" value="disabled" />
+        </el-select>
+        <el-select v-model="query.role" clearable placeholder="角色" style="width: 160px">
+          <el-option label="超级管理员" value="super_admin" />
+          <el-option label="管理员" value="admin" />
+          <el-option label="普通用户" value="user" />
+        </el-select>
+        <el-button :icon="Search" @click="loadUsers">查询</el-button>
+      </div>
+    </div>
+
     <el-table :data="users" v-loading="tableLoading" height="560">
       <el-table-column prop="username" label="用户名" width="150" />
       <el-table-column prop="display_name" label="显示名称" width="160" />
+      <el-table-column prop="email" label="邮箱" min-width="200">
+        <template #default="{ row }">{{ row.email || '未设置' }}</template>
+      </el-table-column>
       <el-table-column label="状态" width="110">
         <template #default="{ row }">
           <StatusPill :value="row.status" />
@@ -50,6 +69,9 @@
           </el-form-item>
           <el-form-item label="显示名称">
             <el-input v-model="form.display_name" />
+          </el-form-item>
+          <el-form-item label="邮箱">
+            <el-input v-model="form.email" autocomplete="email" />
           </el-form-item>
           <el-form-item :label="editingUser ? '新密码' : '密码'">
             <el-input v-model="form.password" type="password" autocomplete="new-password" show-password />
@@ -92,7 +114,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Pencil, RefreshCw, Save, UserPlus } from 'lucide-vue-next';
+import { Pencil, RefreshCw, Save, Search, UserPlus } from 'lucide-vue-next';
 import StatusPill from '../components/StatusPill.vue';
 import { listPermissions, listUsers, registerUser, updateUser } from '../services/auth';
 import type { AuthUser, Permission, RegisterPayload, UpdateUserPayload } from '../types/api';
@@ -105,10 +127,12 @@ const dialogVisible = ref(false);
 const users = ref<AuthUser[]>([]);
 const permissions = ref<Permission[]>([]);
 const editingUser = ref<AuthUser | null>(null);
+const query = reactive({ keyword: '', status: '', role: '' });
 const form = reactive<AccountForm>({
   username: '',
   password: '',
   display_name: '',
+  email: '',
   role_code: 'user',
   status: 'active',
   permission_codes: []
@@ -117,7 +141,11 @@ const form = reactive<AccountForm>({
 async function loadUsers() {
   tableLoading.value = true;
   try {
-    users.value = await listUsers();
+    users.value = await listUsers({
+      keyword: query.keyword,
+      status: query.status,
+      role: query.role
+    });
   } finally {
     tableLoading.value = false;
   }
@@ -137,6 +165,7 @@ function openEdit(user: AuthUser) {
   form.username = user.username;
   form.password = '';
   form.display_name = user.display_name;
+  form.email = user.email;
   form.role_code = (user.roles[0] || 'user') as AccountForm['role_code'];
   form.status = (user.status || 'active') as AccountForm['status'];
   form.permission_codes = [...user.permissions];
@@ -148,6 +177,7 @@ function resetForm() {
   form.username = '';
   form.password = '';
   form.display_name = '';
+  form.email = '';
   form.role_code = 'user';
   form.status = 'active';
   form.permission_codes = [];
@@ -169,6 +199,7 @@ async function submit() {
         username: form.username,
         password: form.password || undefined,
         display_name: form.display_name,
+        email: form.email,
         role_code: form.role_code,
         status: form.status,
         permission_codes: form.permission_codes

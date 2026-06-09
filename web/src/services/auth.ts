@@ -70,8 +70,8 @@ export async function registerUser(payload: RegisterPayload) {
   return unwrap<AuthUser>(res.data);
 }
 
-export async function listUsers() {
-  const res = await http.get('/api/v1/auth/users');
+export async function listUsers(params?: Record<string, string>) {
+  const res = await http.get('/api/v1/auth/users', { params });
   return unwrap<AuthUser[]>(res.data);
 }
 

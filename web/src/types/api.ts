@@ -9,6 +9,7 @@ export interface AuthUser {
   id: number;
   username: string;
   display_name: string;
+  email: string;
   status: string;
   roles: string[];
   permissions: string[];
@@ -23,6 +24,7 @@ export interface RegisterPayload {
   username: string;
   password: string;
   display_name?: string;
+  email?: string;
   role_code: 'admin' | 'user' | 'super_admin';
   permission_codes?: string[];
 }
@@ -31,6 +33,7 @@ export interface UpdateUserPayload {
   username: string;
   password?: string;
   display_name?: string;
+  email?: string;
   status: 'active' | 'disabled';
   role_code: 'admin' | 'user' | 'super_admin';
   permission_codes: string[];

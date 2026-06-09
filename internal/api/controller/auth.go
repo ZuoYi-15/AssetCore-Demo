@@ -50,7 +50,11 @@ func (ctl *AuthController) Register(c *gin.Context) {
 }
 
 func (ctl *AuthController) ListUsers(c *gin.Context) {
-	users, err := ctl.service.ListUsers()
+	users, err := ctl.service.ListUsers(auth.UserQuery{
+		Keyword: c.Query("keyword"),
+		Status:  c.Query("status"),
+		Role:    c.Query("role"),
+	})
 	if err != nil {
 		handleAuthError(c, err)
 		return

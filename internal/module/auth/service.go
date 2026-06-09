@@ -48,6 +48,7 @@ func (s *Service) Bootstrap() error {
 		Username:    "SuperAdmin",
 		Password:    "Admin@123456",
 		DisplayName: "Super Administrator",
+		Email:       "superadmin@asset-core.local",
 		RoleCode:    RoleSuperAdmin,
 	})
 	return err
@@ -95,6 +96,7 @@ func (s *Service) Register(req RegisterRequest) (*UserProfile, error) {
 		Username:     username,
 		PasswordHash: string(passwordHash),
 		DisplayName:  strings.TrimSpace(req.DisplayName),
+		Email:        strings.TrimSpace(req.Email),
 		Status:       "active",
 	}
 	if err := s.repo.CreateUser(user); err != nil {
@@ -109,8 +111,11 @@ func (s *Service) Register(req RegisterRequest) (*UserProfile, error) {
 	return s.Profile(user.ID)
 }
 
-func (s *Service) ListUsers() ([]UserProfile, error) {
-	users, err := s.repo.ListUsers()
+func (s *Service) ListUsers(q UserQuery) ([]UserProfile, error) {
+	q.Keyword = strings.TrimSpace(q.Keyword)
+	q.Status = strings.TrimSpace(q.Status)
+	q.Role = strings.TrimSpace(q.Role)
+	users, err := s.repo.ListUsers(q)
 	if err != nil {
 		return nil, err
 	}
@@ -151,6 +156,7 @@ func (s *Service) UpdateUser(id uint64, req UpdateUserRequest) (*UserProfile, er
 	}
 	user.Username = username
 	user.DisplayName = strings.TrimSpace(req.DisplayName)
+	user.Email = strings.TrimSpace(req.Email)
 	user.Status = req.Status
 	if req.Password != "" {
 		if len(req.Password) < 8 {
@@ -227,6 +233,7 @@ func (s *Service) Profile(userID uint64) (*UserProfile, error) {
 		ID:          user.ID,
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
+		Email:       user.Email,
 		Status:      user.Status,
 		Roles:       roles,
 		Permissions: permissions,
