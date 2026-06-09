@@ -24,6 +24,12 @@ func (r *Repository) CreateDefinition(item *Definition) error {
 	return r.db.Create(item).Error
 }
 
+func (r *Repository) CountDefinitions() (int64, error) {
+	var count int64
+	err := r.db.Model(&Definition{}).Count(&count).Error
+	return count, err
+}
+
 func (r *Repository) UpdateDefinition(item *Definition) error {
 	return r.db.Save(item).Error
 }
@@ -49,12 +55,26 @@ func (r *Repository) FindDefinitionByType(flowType string) (*Definition, error) 
 	return &item, nil
 }
 
+func (r *Repository) FindDefinitionByID(id uint64) (*Definition, error) {
+	var item Definition
+	if err := r.db.Preload("Nodes", func(db *gorm.DB) *gorm.DB {
+		return db.Order("sort_order ASC, id ASC")
+	}).First(&item, id).Error; err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
 func (r *Repository) ListDefinitions() ([]Definition, error) {
 	var items []Definition
 	err := r.db.Preload("Nodes", func(db *gorm.DB) *gorm.DB {
 		return db.Order("sort_order ASC, id ASC")
 	}).Order("id ASC").Find(&items).Error
 	return items, err
+}
+
+func (r *Repository) DeleteDefinition(id uint64) error {
+	return r.db.Delete(&Definition{}, id).Error
 }
 
 func (r *Repository) CreateInstance(item *Instance) error {

@@ -131,6 +131,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		{
 			workflowRoutes.GET("/definitions", middleware.RequirePermission(auth.PermissionWorkflowStart), workflowCtl.ListDefinitions)
 			workflowRoutes.PUT("/definitions", middleware.RequirePermission(auth.PermissionWorkflowConfig), workflowCtl.SaveDefinition)
+			workflowRoutes.DELETE("/definitions/:id", middleware.RequirePermission(auth.PermissionWorkflowConfig), workflowCtl.DeleteDefinition)
 			workflowRoutes.POST("/instances", middleware.RequirePermission(auth.PermissionWorkflowStart), workflowCtl.Start)
 			workflowRoutes.GET("/instances", middleware.RequirePermission(auth.PermissionWorkflowStart), workflowCtl.ListInstances)
 			workflowRoutes.GET("/tasks", middleware.RequirePermission(auth.PermissionWorkflowApprove), workflowCtl.ListTasks)

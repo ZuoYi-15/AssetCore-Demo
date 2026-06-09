@@ -46,6 +46,18 @@ func (ctl *WorkflowController) SaveDefinition(c *gin.Context) {
 	response.OK(c, item)
 }
 
+func (ctl *WorkflowController) DeleteDefinition(c *gin.Context) {
+	id, ok := parseID(c, "id")
+	if !ok {
+		return
+	}
+	if err := ctl.service.DeleteDefinition(id); err != nil {
+		handleWorkflowError(c, err)
+		return
+	}
+	response.OK(c, gin.H{"deleted": true})
+}
+
 func (ctl *WorkflowController) Start(c *gin.Context) {
 	var req workflow.StartRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -124,7 +136,7 @@ func handleWorkflowError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, workflow.ErrDefinitionEmpty), errors.Is(err, workflow.ErrInvalidAction):
 		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, err.Error())
-	case errors.Is(err, workflow.ErrDefinitionInactive), errors.Is(err, workflow.ErrTaskNotPending):
+	case errors.Is(err, workflow.ErrDefinitionInactive), errors.Is(err, workflow.ErrTaskNotPending), errors.Is(err, workflow.ErrDefinitionActive):
 		response.Fail(c, http.StatusConflict, apperrors.CodeAssetConflict, err.Error())
 	case errors.Is(err, workflow.ErrApproverRole):
 		response.Fail(c, http.StatusForbidden, apperrors.CodeForbidden, err.Error())

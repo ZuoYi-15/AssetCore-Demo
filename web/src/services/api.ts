@@ -137,6 +137,11 @@ export async function saveWorkflowDefinition(payload: WorkflowDefinitionPayload)
   return unwrap<WorkflowDefinition>(res.data);
 }
 
+export async function deleteWorkflowDefinition(id: number) {
+  const res = await http.delete(`/api/v1/workflows/definitions/${id}`);
+  return unwrap<{ deleted: boolean }>(res.data);
+}
+
 export async function startWorkflow(payload: StartWorkflowPayload) {
   const res = await http.post('/api/v1/workflows/instances', payload);
   return unwrap<WorkflowInstance>(res.data);

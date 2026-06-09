@@ -394,3 +394,10 @@ a {
   color: #344054;
   line-height: 1.6;
 }
+
+.workflow-node-list {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: #475467;
+}

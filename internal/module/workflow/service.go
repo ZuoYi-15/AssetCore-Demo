@@ -18,6 +18,7 @@ import (
 var (
 	ErrDefinitionInactive = errors.New("workflow definition is inactive")
 	ErrDefinitionEmpty    = errors.New("workflow definition must contain at least one node")
+	ErrDefinitionActive   = errors.New("only inactive workflow definitions can be deleted")
 	ErrInvalidAction      = errors.New("invalid workflow action")
 	ErrTaskNotPending     = errors.New("workflow task is not pending")
 	ErrApproverRole       = errors.New("current user does not match approver role")
@@ -43,18 +44,20 @@ func (s *Service) Bootstrap() error {
 	if err := s.repo.AutoMigrate(); err != nil {
 		return err
 	}
-	defaults := []SaveDefinitionRequest{
-		{FlowType: FlowPurchase, Name: "采购审批", Status: StatusActive, Nodes: []NodeRequest{{NodeName: "管理员审批", ApproverRole: auth.RoleAdmin, SortOrder: 1}}},
-		{FlowType: FlowTransfer, Name: "调拨审批", Status: StatusActive, Nodes: []NodeRequest{{NodeName: "管理员审批", ApproverRole: auth.RoleAdmin, SortOrder: 1}}},
-		{FlowType: FlowRetire, Name: "报废审批", Status: StatusActive, Nodes: []NodeRequest{{NodeName: "管理员审批", ApproverRole: auth.RoleAdmin, SortOrder: 1}}},
+	count, err := s.repo.CountDefinitions()
+	if err != nil {
+		return err
 	}
-	for _, item := range defaults {
-		if _, err := s.repo.FindDefinitionByType(item.FlowType); errors.Is(err, gorm.ErrRecordNotFound) {
+	if count == 0 {
+		defaults := []SaveDefinitionRequest{
+			{FlowType: FlowPurchase, Name: "采购审批", Status: StatusActive, Nodes: []NodeRequest{{NodeName: "管理员审批", ApproverRole: auth.RoleAdmin, SortOrder: 1}}},
+			{FlowType: FlowTransfer, Name: "调拨审批", Status: StatusActive, Nodes: []NodeRequest{{NodeName: "管理员审批", ApproverRole: auth.RoleAdmin, SortOrder: 1}}},
+			{FlowType: FlowRetire, Name: "报废审批", Status: StatusActive, Nodes: []NodeRequest{{NodeName: "管理员审批", ApproverRole: auth.RoleAdmin, SortOrder: 1}}},
+		}
+		for _, item := range defaults {
 			if _, err := s.SaveDefinition(item); err != nil {
 				return err
 			}
-		} else if err != nil {
-			return err
 		}
 	}
 	if err := s.syncApprovedRetireAssets(); err != nil {
@@ -118,6 +121,22 @@ func (s *Service) SaveDefinition(req SaveDefinitionRequest) (*Definition, error)
 
 func (s *Service) ListDefinitions() ([]Definition, error) {
 	return s.repo.ListDefinitions()
+}
+
+func (s *Service) DeleteDefinition(id uint64) error {
+	return s.repo.Transaction(func(tx *Repository) error {
+		definition, err := tx.FindDefinitionByID(id)
+		if err != nil {
+			return err
+		}
+		if definition.Status != StatusInactive {
+			return ErrDefinitionActive
+		}
+		if err := tx.DeleteNodes(definition.ID); err != nil {
+			return err
+		}
+		return tx.DeleteDefinition(definition.ID)
+	})
 }
 
 func (s *Service) Start(req StartRequest, actor Actor) (*Instance, error) {
