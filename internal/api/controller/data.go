@@ -2,6 +2,8 @@ package controller
 
 import (
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"asset-core/internal/module/data"
 	apperrors "asset-core/internal/pkg/errors"
@@ -31,6 +33,31 @@ func (ctl *DataController) CreateImportTask(c *gin.Context) {
 		return
 	}
 	response.Created(c, item)
+}
+
+func (ctl *DataController) ImportAssetsExcel(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, "file is required")
+		return
+	}
+	if strings.ToLower(filepath.Ext(file.Filename)) != ".xlsx" {
+		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, "only .xlsx files are supported")
+		return
+	}
+	opened, err := file.Open()
+	if err != nil {
+		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, err.Error())
+		return
+	}
+	defer opened.Close()
+	operatorID := c.PostForm("operator_id")
+	result, err := ctl.service.ImportAssetsExcel(opened, file.Filename, operatorID)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	response.Created(c, result)
 }
 
 func (ctl *DataController) ListImportTasks(c *gin.Context) {

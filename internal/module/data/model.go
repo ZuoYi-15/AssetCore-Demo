@@ -32,6 +32,7 @@ func (ImportError) TableName() string { return "data_import_error" }
 
 const (
 	ImportPending   = "pending"
+	ImportRunning   = "running"
 	ImportCompleted = "completed"
 	ImportFailed    = "failed"
 )

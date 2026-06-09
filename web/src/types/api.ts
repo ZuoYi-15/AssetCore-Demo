@@ -5,6 +5,26 @@ export interface ApiResponse<T> {
   trace_id?: string;
 }
 
+export interface AuthUser {
+  id: number;
+  username: string;
+  display_name: string;
+  roles: string[];
+  permissions: string[];
+}
+
+export interface LoginResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface RegisterPayload {
+  username: string;
+  password: string;
+  display_name?: string;
+  role_code: 'admin' | 'user' | 'super_admin';
+}
+
 export interface PageResult<T> {
   items: T[];
   page: number;
@@ -105,6 +125,10 @@ export interface ImportTask {
   operator_id: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ImportAssetsResult {
+  task: ImportTask;
 }
 
 export interface ImportError {

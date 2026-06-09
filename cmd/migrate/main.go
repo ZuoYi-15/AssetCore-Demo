@@ -5,6 +5,7 @@ import (
 	"asset-core/internal/infrastructure/mysql"
 	"asset-core/internal/module/asset"
 	"asset-core/internal/module/audit"
+	"asset-core/internal/module/auth"
 	"asset-core/internal/module/data"
 	"asset-core/internal/module/identity"
 	"asset-core/internal/module/verification"
@@ -23,6 +24,11 @@ func main() {
 		&data.ImportTask{},
 		&data.ImportError{},
 		&audit.Log{},
+		&auth.User{},
+		&auth.Role{},
+		&auth.Permission{},
+		&auth.UserRole{},
+		&auth.RolePermission{},
 	); err != nil {
 		panic(err)
 	}

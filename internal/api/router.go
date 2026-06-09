@@ -6,8 +6,10 @@ import (
 	"asset-core/internal/api/controller"
 	"asset-core/internal/api/middleware"
 	"asset-core/internal/config"
+	"asset-core/internal/infrastructure/elasticsearch"
 	"asset-core/internal/infrastructure/kafka"
 	"asset-core/internal/module/asset"
+	"asset-core/internal/module/auth"
 	"asset-core/internal/module/data"
 	"asset-core/internal/module/identity"
 	"asset-core/internal/module/verification"
@@ -39,19 +41,28 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	identityRepo := identity.NewRepository(deps.DB)
 	identityService := identity.NewService(identityRepo, deps.EventProducer)
 
+	esClient := elasticsearch.New(deps.Config.ES)
+
 	assetRepo := asset.NewRepository(deps.DB)
-	assetService := asset.NewService(assetRepo, identityService, deps.EventProducer)
+	assetService := asset.NewService(assetRepo, identityService, deps.EventProducer, esClient)
 
 	verificationRepo := verification.NewRepository(deps.DB)
 	verificationService := verification.NewService(verificationRepo, assetRepo, deps.EventProducer)
 
 	dataRepo := data.NewRepository(deps.DB)
-	dataService := data.NewService(dataRepo, deps.EventProducer)
+	dataService := data.NewService(dataRepo, assetService, deps.EventProducer)
+
+	authRepo := auth.NewRepository(deps.DB)
+	authService := auth.NewService(authRepo, deps.Config.JWT)
+	if err := authService.Bootstrap(); err != nil {
+		deps.Logger.Fatal("auth bootstrap failed", logger.Error(err))
+	}
 
 	assetCtl := controller.NewAssetController(assetService)
 	identityCtl := controller.NewIdentityController(identityService)
 	verificationCtl := controller.NewVerificationController(verificationService)
 	dataCtl := controller.NewDataController(dataService)
+	authCtl := controller.NewAuthController(authService)
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok", "service": deps.Config.App.Name})
@@ -59,20 +70,29 @@ func NewRouter(deps Dependencies) *gin.Engine {
 
 	v1 := r.Group("/api/v1")
 	{
+		v1.POST("/auth/login", authCtl.Login)
+
+		authRoutes := v1.Group("")
+		authRoutes.Use(middleware.AuthRequired(authService))
+		authRoutes.GET("/auth/me", authCtl.Me)
+		authRoutes.POST("/auth/register", middleware.RequirePermission(auth.PermissionUserCreate), authCtl.Register)
+
 		assets := v1.Group("/assets")
+		assets.Use(middleware.AuthRequired(authService))
 		{
-			assets.POST("", assetCtl.Create)
-			assets.GET("", assetCtl.List)
-			assets.GET("/:id", assetCtl.Get)
-			assets.PUT("/:id", assetCtl.Update)
-			assets.DELETE("/:id", assetCtl.Delete)
-			assets.POST("/:id/status", assetCtl.ChangeStatus)
-			assets.GET("/:id/changes", assetCtl.ChangeLogs)
-			assets.POST("/:id/verify", verificationCtl.VerifyAsset)
-			assets.GET("/:id/verification-result", verificationCtl.LatestByAsset)
+			assets.POST("", middleware.RequirePermission(auth.PermissionAssetCreate), assetCtl.Create)
+			assets.GET("", middleware.RequirePermission(auth.PermissionAssetRead), assetCtl.List)
+			assets.GET("/:id", middleware.RequirePermission(auth.PermissionAssetRead), assetCtl.Get)
+			assets.PUT("/:id", middleware.RequirePermission(auth.PermissionAssetUpdate), assetCtl.Update)
+			assets.DELETE("/:id", middleware.RequirePermission(auth.PermissionAssetDelete), assetCtl.Delete)
+			assets.POST("/:id/status", middleware.RequirePermission(auth.PermissionAssetUpdate), assetCtl.ChangeStatus)
+			assets.GET("/:id/changes", middleware.RequirePermission(auth.PermissionAssetRead), assetCtl.ChangeLogs)
+			assets.POST("/:id/verify", middleware.RequirePermission(auth.PermissionAssetUpdate), verificationCtl.VerifyAsset)
+			assets.GET("/:id/verification-result", middleware.RequirePermission(auth.PermissionAssetRead), verificationCtl.LatestByAsset)
 		}
 
 		identities := v1.Group("/identities")
+		identities.Use(middleware.AuthRequired(authService))
 		{
 			identities.POST("/generate", identityCtl.Generate)
 			identities.GET("/:identity_id", identityCtl.Get)
@@ -82,14 +102,17 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		}
 
 		verifications := v1.Group("/verifications")
+		verifications.Use(middleware.AuthRequired(authService))
 		{
 			verifications.POST("", verificationCtl.Create)
 			verifications.GET("/:id", verificationCtl.Get)
 		}
 
 		dataRoutes := v1.Group("/data")
+		dataRoutes.Use(middleware.AuthRequired(authService))
 		{
-			dataRoutes.POST("/import", dataCtl.CreateImportTask)
+			dataRoutes.POST("/import", middleware.RequirePermission(auth.PermissionAssetCreate), dataCtl.CreateImportTask)
+			dataRoutes.POST("/import/assets", middleware.RequirePermission(auth.PermissionAssetCreate), dataCtl.ImportAssetsExcel)
 			dataRoutes.GET("/import-tasks", dataCtl.ListImportTasks)
 			dataRoutes.GET("/import-tasks/:id", dataCtl.GetImportTask)
 			dataRoutes.GET("/import-tasks/:id/errors", dataCtl.ImportErrors)

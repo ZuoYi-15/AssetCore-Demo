@@ -16,6 +16,10 @@
           <component :is="item.icon" :size="18" />
           <span>{{ item.label }}</span>
         </RouterLink>
+        <RouterLink v-if="canRegisterUser" class="nav-link" to="/register">
+          <UserPlus :size="18" />
+          <span>注册账号</span>
+        </RouterLink>
       </nav>
     </aside>
 
@@ -29,7 +33,9 @@
           <el-tag :type="healthState === 'ok' ? 'success' : 'danger'" effect="dark">
             {{ healthState === 'ok' ? '服务在线' : '服务异常' }}
           </el-tag>
+          <el-tag type="info">{{ currentUserLabel }}</el-tag>
           <el-button :icon="RefreshCw" @click="checkHealth">刷新</el-button>
+          <el-button :icon="LogOut" @click="logout">退出</el-button>
         </div>
       </header>
 
@@ -41,8 +47,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
-import { Database, FileStack, Fingerprint, Gauge, RefreshCw, ShieldCheck, Workflow } from 'lucide-vue-next';
+import { Database, FileStack, Fingerprint, Gauge, LogOut, RefreshCw, ShieldCheck, UserPlus, Workflow } from 'lucide-vue-next';
 import { health } from '../services/api';
+import { authState, clearSession, hasPermission } from '../services/auth';
 
 const route = useRoute();
 const healthState = ref<'ok' | 'down'>('down');
@@ -60,10 +67,13 @@ const titleMap: Record<string, string> = {
   assets: '资产台账',
   identities: '身份 ID',
   verifications: '交叉验证',
-  data: '数据管理'
+  data: '数据管理',
+  register: '注册账号'
 };
 
 const currentTitle = computed(() => titleMap[String(route.name)] || 'Asset-Core');
+const canRegisterUser = computed(() => hasPermission('user:create'));
+const currentUserLabel = computed(() => authState.user?.display_name || authState.user?.username || '未登录');
 
 async function checkHealth() {
   try {
@@ -72,6 +82,11 @@ async function checkHealth() {
   } catch {
     healthState.value = 'down';
   }
+}
+
+function logout() {
+  clearSession();
+  location.href = '/login';
 }
 
 onMounted(checkHealth);

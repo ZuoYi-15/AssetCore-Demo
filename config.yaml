@@ -21,3 +21,10 @@ kafka:
 jwt:
   secret: change-me
   issuer: asset-core
+
+elasticsearch:
+  enabled: false
+  address: http://127.0.0.1:9200
+  username: ""
+  password: ""
+  index: asset-core-assets

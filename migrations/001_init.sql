@@ -126,3 +126,51 @@ CREATE TABLE IF NOT EXISTS audit_log (
   INDEX idx_audit_log_action (action),
   INDEX idx_audit_log_resource (resource)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_account (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  display_name VARCHAR(128),
+  status VARCHAR(32) NOT NULL DEFAULT 'active',
+  created_at DATETIME(3),
+  updated_at DATETIME(3),
+  INDEX idx_user_account_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS auth_role (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(64) NOT NULL UNIQUE,
+  name VARCHAR(128) NOT NULL,
+  description VARCHAR(255),
+  created_at DATETIME(3),
+  updated_at DATETIME(3)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS auth_permission (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(128) NOT NULL UNIQUE,
+  name VARCHAR(128) NOT NULL,
+  resource VARCHAR(64),
+  action VARCHAR(64),
+  description VARCHAR(255),
+  created_at DATETIME(3),
+  updated_at DATETIME(3),
+  INDEX idx_auth_permission_resource (resource)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS auth_user_role (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NOT NULL,
+  role_id BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME(3),
+  UNIQUE KEY idx_user_role (user_id, role_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS auth_role_permission (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  role_id BIGINT UNSIGNED NOT NULL,
+  permission_id BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME(3),
+  UNIQUE KEY idx_role_permission (role_id, permission_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

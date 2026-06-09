@@ -7,6 +7,14 @@ export const http = axios.create({
   timeout: 15000
 });
 
+http.interceptors.request.use((config) => {
+  const token = localStorage.getItem('asset_core_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 http.interceptors.response.use(
   (response) => {
     const body = response.data as ApiResponse<unknown>;
@@ -17,6 +25,13 @@ http.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem('asset_core_token');
+      localStorage.removeItem('asset_core_user');
+      if (location.pathname !== '/login') {
+        location.href = '/login';
+      }
+    }
     ElMessage.error(error?.response?.data?.message || error.message || '网络请求失败');
     return Promise.reject(error);
   }

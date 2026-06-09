@@ -14,6 +14,14 @@ func (r *Repository) CreateTask(task *ImportTask) error {
 	return r.db.Create(task).Error
 }
 
+func (r *Repository) UpdateTask(task *ImportTask) error {
+	return r.db.Save(task).Error
+}
+
+func (r *Repository) CreateError(item *ImportError) error {
+	return r.db.Create(item).Error
+}
+
 func (r *Repository) ListTasks(offset, limit int) ([]ImportTask, int64, error) {
 	var total int64
 	if err := r.db.Model(&ImportTask{}).Count(&total).Error; err != nil {

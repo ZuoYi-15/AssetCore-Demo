@@ -12,6 +12,7 @@ type Config struct {
 	Redis RedisConfig
 	Kafka KafkaConfig
 	JWT   JWTConfig
+	ES    ElasticsearchConfig
 }
 
 type AppConfig struct {
@@ -40,6 +41,14 @@ type KafkaConfig struct {
 type JWTConfig struct {
 	Secret string
 	Issuer string
+}
+
+type ElasticsearchConfig struct {
+	Enabled  bool
+	Address  string
+	Username string
+	Password string
+	Index    string
 }
 
 func Load() *Config {
@@ -79,6 +88,13 @@ func Load() *Config {
 			Secret: v.GetString("jwt.secret"),
 			Issuer: v.GetString("jwt.issuer"),
 		},
+		ES: ElasticsearchConfig{
+			Enabled:  v.GetBool("elasticsearch.enabled"),
+			Address:  v.GetString("elasticsearch.address"),
+			Username: v.GetString("elasticsearch.username"),
+			Password: v.GetString("elasticsearch.password"),
+			Index:    v.GetString("elasticsearch.index"),
+		},
 	}
 }
 
@@ -96,4 +112,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("kafka.enabled", false)
 	v.SetDefault("jwt.secret", "change-me")
 	v.SetDefault("jwt.issuer", "asset-core")
+	v.SetDefault("elasticsearch.enabled", false)
+	v.SetDefault("elasticsearch.address", "http://127.0.0.1:9200")
+	v.SetDefault("elasticsearch.username", "")
+	v.SetDefault("elasticsearch.password", "")
+	v.SetDefault("elasticsearch.index", "asset-core-assets")
 }

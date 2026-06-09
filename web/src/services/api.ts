@@ -6,6 +6,7 @@ import type {
   Identity,
   IdentityFeature,
   ImportError,
+  ImportAssetsResult,
   ImportTask,
   PageResult,
   VerificationResult
@@ -94,6 +95,16 @@ export async function getVerification(id: number) {
 export async function createImportTask(payload: { file_name: string; file_url?: string; operator_id?: string }) {
   const res = await http.post('/api/v1/data/import', payload);
   return unwrap<ImportTask>(res.data);
+}
+
+export async function importAssetsExcel(file: File, operatorID?: string) {
+  const form = new FormData();
+  form.append('file', file);
+  if (operatorID) {
+    form.append('operator_id', operatorID);
+  }
+  const res = await http.post('/api/v1/data/import/assets', form);
+  return unwrap<ImportAssetsResult>(res.data);
 }
 
 export async function listImportTasks(params: Record<string, string | number>) {

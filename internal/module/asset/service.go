@@ -1,18 +1,34 @@
 package asset
 
 import (
+	"context"
+	"time"
+
 	"asset-core/internal/infrastructure/kafka"
 	"asset-core/internal/module/identity"
 )
+
+type SearchIndexer interface {
+	Enabled() bool
+	IndexAsset(ctx context.Context, item Asset) error
+	DeleteAsset(ctx context.Context, id uint64) error
+	SearchAssets(ctx context.Context, q Query, offset, limit int) (*SearchResult, error)
+}
+
+type SearchResult struct {
+	Items []Asset
+	Total int64
+}
 
 type Service struct {
 	repo            *Repository
 	identityService *identity.Service
 	producer        kafka.Producer
+	search          SearchIndexer
 }
 
-func NewService(repo *Repository, identityService *identity.Service, producer kafka.Producer) *Service {
-	return &Service{repo: repo, identityService: identityService, producer: producer}
+func NewService(repo *Repository, identityService *identity.Service, producer kafka.Producer, search SearchIndexer) *Service {
+	return &Service{repo: repo, identityService: identityService, producer: producer, search: search}
 }
 
 func (s *Service) Create(req CreateRequest) (*Asset, error) {
@@ -49,11 +65,20 @@ func (s *Service) Create(req CreateRequest) (*Asset, error) {
 		return nil, err
 	}
 	_, _ = s.identityService.Bind(id.IdentityID, item.ID)
+	s.indexAsset(*item)
 	_ = s.producer.Publish("asset.created", kafka.NewEvent("asset.created", item))
 	return item, nil
 }
 
 func (s *Service) List(q Query, offset, limit int) ([]Asset, int64, error) {
+	if s.search != nil && s.search.Enabled() {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		result, err := s.search.SearchAssets(ctx, q, offset, limit)
+		if err == nil && result != nil {
+			return result.Items, result.Total, nil
+		}
+	}
 	return s.repo.List(q, offset, limit)
 }
 
@@ -72,6 +97,7 @@ func (s *Service) Update(id uint64, req UpdateRequest) (*Asset, error) {
 		return nil, err
 	}
 	s.writeChangeLogs(before, *item)
+	s.indexAsset(*item)
 	_ = s.producer.Publish("asset.updated", kafka.NewEvent("asset.updated", item))
 	return item, nil
 }
@@ -80,6 +106,7 @@ func (s *Service) Delete(id uint64) error {
 	if err := s.repo.Delete(id); err != nil {
 		return err
 	}
+	s.deleteAssetIndex(id)
 	_ = s.producer.Publish("asset.deleted", kafka.NewEvent("asset.deleted", map[string]uint64{"id": id}))
 	return nil
 }
@@ -90,6 +117,24 @@ func (s *Service) UpdateStatus(id uint64, status string) (*Asset, error) {
 
 func (s *Service) ChangeLogs(assetID uint64) ([]ChangeLog, error) {
 	return s.repo.ListChangeLogs(assetID)
+}
+
+func (s *Service) indexAsset(item Asset) {
+	if s.search == nil || !s.search.Enabled() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_ = s.search.IndexAsset(ctx, item)
+}
+
+func (s *Service) deleteAssetIndex(id uint64) {
+	if s.search == nil || !s.search.Enabled() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_ = s.search.DeleteAsset(ctx, id)
 }
 
 func applyUpdate(item *Asset, req UpdateRequest) {

@@ -1,16 +1,13 @@
 <template>
   <div class="content-grid">
     <section class="panel">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <el-input v-model="form.file_name" placeholder="文件名，例如 assets.csv" style="width: 240px" />
-          <el-input v-model="form.file_url" placeholder="文件地址，例如 local://assets.csv" style="width: 280px" />
-          <el-input v-model="form.operator_id" placeholder="操作人" style="width: 160px" />
-          <el-button type="primary" :icon="UploadCloud" @click="create">创建导入任务</el-button>
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">导入任务</div>
+          <div class="empty-hint">查看资产批量导入任务和错误明细。</div>
         </div>
         <div class="toolbar-right">
           <el-button :icon="RefreshCw" @click="load">刷新</el-button>
-          <el-button :icon="Download" @click="exportAssets">资产导出</el-button>
         </div>
       </div>
 
@@ -20,7 +17,7 @@
             <span class="mono">{{ row.task_no }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="file_name" label="文件名" width="180" />
+        <el-table-column prop="file_name" label="文件名" width="190" />
         <el-table-column prop="status" label="状态" width="120">
           <template #default="{ row }">
             <StatusPill :value="row.status" />
@@ -62,14 +59,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
-import { ElMessage } from 'element-plus';
-import { CircleAlert, Download, RefreshCw, UploadCloud } from 'lucide-vue-next';
+import { onMounted, ref } from 'vue';
+import { CircleAlert, RefreshCw } from 'lucide-vue-next';
 import StatusPill from '../components/StatusPill.vue';
-import { createImportTask, listImportErrors, listImportTasks } from '../services/api';
+import { listImportErrors, listImportTasks } from '../services/api';
 import type { ImportError, ImportTask } from '../types/api';
 
-const form = reactive({ file_name: 'assets.csv', file_url: 'local://assets.csv', operator_id: 'admin' });
 const tasks = ref<ImportTask[]>([]);
 const errors = ref<ImportError[]>([]);
 const loading = ref(false);
@@ -89,22 +84,9 @@ async function load() {
   }
 }
 
-async function create() {
-  if (!form.file_name) {
-    ElMessage.warning('文件名不能为空');
-    return;
-  }
-  await createImportTask(form);
-  await load();
-}
-
 async function openErrors(id: number) {
   errors.value = await listImportErrors(id);
   errorVisible.value = true;
-}
-
-function exportAssets() {
-  ElMessage.info('后端当前为导出预留接口，真实文件导出可在下一步接入。');
 }
 
 onMounted(load);

@@ -5,3 +5,7 @@ type CreateImportTaskRequest struct {
 	FileURL    string `json:"file_url"`
 	OperatorID string `json:"operator_id"`
 }
+
+type ImportAssetsResult struct {
+	Task *ImportTask `json:"task"`
+}

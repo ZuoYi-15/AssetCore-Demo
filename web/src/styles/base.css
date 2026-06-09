@@ -316,3 +316,64 @@ a {
 .el-select__wrapper {
   border-radius: 7px;
 }
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+}
+
+.auth-panel {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 12px 36px rgba(16, 24, 40, 0.08);
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-form h1 {
+  margin: 0 0 10px;
+  font-size: 24px;
+}
+
+.auth-form .el-button {
+  width: 100%;
+}
+
+.auth-hint {
+  margin-top: 8px;
+  color: #667085;
+  font-size: 12px;
+  text-align: center;
+}
+
+.register-panel {
+  max-width: 820px;
+}
+
+.register-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.import-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}

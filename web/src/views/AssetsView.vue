@@ -14,7 +14,8 @@
       </div>
       <div class="toolbar-right">
         <el-button :icon="RefreshCw" @click="load">刷新</el-button>
-        <el-button type="primary" :icon="Plus" @click="openCreate">新增资产</el-button>
+        <el-button v-if="canCreateAsset" :icon="FileSpreadsheet" @click="openImport">批量导入</el-button>
+        <el-button v-if="canCreateAsset" type="primary" :icon="Plus" @click="openCreate">新增资产</el-button>
       </div>
     </div>
 
@@ -41,10 +42,10 @@
       <el-table-column label="操作" width="290" fixed="right">
         <template #default="{ row }">
           <span class="table-actions">
-            <el-button size="small" :icon="ShieldCheck" @click="runVerify(row.id)">验证</el-button>
+            <el-button v-if="canUpdateAsset" size="small" :icon="ShieldCheck" @click="runVerify(row.id)">验证</el-button>
             <el-button size="small" :icon="History" @click="openChanges(row)">日志</el-button>
-            <el-button size="small" :icon="Pencil" @click="openEdit(row)">编辑</el-button>
-            <el-button size="small" type="danger" :icon="Trash2" @click="remove(row)">删除</el-button>
+            <el-button v-if="canUpdateAsset" size="small" :icon="Pencil" @click="openEdit(row)">编辑</el-button>
+            <el-button v-if="canDeleteAsset" size="small" type="danger" :icon="Trash2" @click="remove(row)">删除</el-button>
           </span>
         </template>
       </el-table-column>
@@ -74,7 +75,7 @@
         <el-form-item label="IP 地址"><el-input v-model="form.ip_address" /></el-form-item>
         <el-form-item label="主机名"><el-input v-model="form.hostname" /></el-form-item>
         <el-form-item label="所属部门"><el-input v-model="form.owner_department" /></el-form-item>
-        <el-form-item label="责任人"><el-input v-model="form.owner_user" /></el-form-item>
+        <el-form-item label="负责人"><el-input v-model="form.owner_user" /></el-form-item>
         <el-form-item label="位置"><el-input v-model="form.location" /></el-form-item>
         <el-form-item label="数据来源"><el-input v-model="form.source" /></el-form-item>
         <el-form-item v-if="editing" label="状态">
@@ -93,6 +94,32 @@
     </template>
   </el-dialog>
 
+  <el-dialog v-model="importVisible" title="资产批量导入" width="560px">
+    <div class="import-strip">
+      <el-upload
+        ref="uploadRef"
+        action=""
+        :auto-upload="false"
+        :limit="1"
+        accept=".xlsx"
+        :on-change="onFileChange"
+        :on-remove="onFileRemove"
+      >
+        <el-button :icon="FileSpreadsheet">选择 Excel</el-button>
+      </el-upload>
+      <el-button :icon="Download" @click="downloadDemo">下载模板</el-button>
+    </div>
+    <el-form label-position="top" style="margin-top: 16px">
+      <el-form-item label="操作人">
+        <el-input v-model="operatorID" placeholder="请输入操作人" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="importVisible = false">取消</el-button>
+      <el-button type="primary" :icon="UploadCloud" :loading="uploading" @click="uploadExcel">上传并导入</el-button>
+    </template>
+  </el-dialog>
+
   <el-drawer v-model="detailVisible" title="资产变更日志" size="560px">
     <el-table :data="changes">
       <el-table-column prop="field" label="字段" width="140" />
@@ -104,11 +131,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { History, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2 } from 'lucide-vue-next';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { ElMessage, ElMessageBox, type UploadFile, type UploadInstance } from 'element-plus';
+import { Download, FileSpreadsheet, History, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, UploadCloud } from 'lucide-vue-next';
 import StatusPill from '../components/StatusPill.vue';
-import { createAsset, deleteAsset, getAssetChanges, listAssets, updateAsset, verifyAsset } from '../services/api';
+import { createAsset, deleteAsset, getAssetChanges, importAssetsExcel, listAssets, updateAsset, verifyAsset } from '../services/api';
+import { hasPermission } from '../services/auth';
 import type { Asset, AssetForm, ChangeLog } from '../types/api';
 
 const loading = ref(false);
@@ -118,10 +146,19 @@ const page = ref(1);
 const pageSize = ref(20);
 const query = reactive({ keyword: '', status: '', asset_type: '' });
 const formVisible = ref(false);
+const importVisible = ref(false);
 const detailVisible = ref(false);
 const editing = ref<Asset | null>(null);
 const form = reactive<AssetForm>({});
 const changes = ref<ChangeLog[]>([]);
+const uploadRef = ref<UploadInstance>();
+const selectedFile = ref<File | null>(null);
+const operatorID = ref('admin');
+const uploading = ref(false);
+
+const canCreateAsset = computed(() => hasPermission('asset:create'));
+const canUpdateAsset = computed(() => hasPermission('asset:update'));
+const canDeleteAsset = computed(() => hasPermission('asset:delete'));
 
 async function load() {
   loading.value = true;
@@ -150,6 +187,45 @@ function openEdit(row: Asset) {
   resetForm();
   Object.assign(form, row);
   formVisible.value = true;
+}
+
+function openImport() {
+  selectedFile.value = null;
+  uploadRef.value?.clearFiles();
+  importVisible.value = true;
+}
+
+function onFileChange(file: UploadFile) {
+  selectedFile.value = file.raw || null;
+}
+
+function onFileRemove() {
+  selectedFile.value = null;
+}
+
+function downloadDemo() {
+  const link = document.createElement('a');
+  link.href = '/docs/asset-import-demo.xlsx';
+  link.download = 'asset-import-demo.xlsx';
+  link.click();
+}
+
+async function uploadExcel() {
+  if (!selectedFile.value) {
+    ElMessage.warning('请先选择 Excel 文件');
+    return;
+  }
+  uploading.value = true;
+  try {
+    const result = await importAssetsExcel(selectedFile.value, operatorID.value);
+    ElMessage.success(`导入完成：成功 ${result.task.success_count} 条，失败 ${result.task.failed_count} 条`);
+    uploadRef.value?.clearFiles();
+    selectedFile.value = null;
+    importVisible.value = false;
+    await load();
+  } finally {
+    uploading.value = false;
+  }
 }
 
 async function submit() {
