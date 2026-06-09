@@ -313,6 +313,36 @@ a {
   align-items: center;
 }
 
+.identity-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.identity-id {
+  display: inline-block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.asset-context {
+  margin-bottom: 14px;
+}
+
+.bound-asset {
+  display: grid;
+  gap: 4px;
+}
+
+.bound-asset span {
+  color: #667085;
+  font-size: 12px;
+}
+
 .split-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);

@@ -94,6 +94,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 			assets.GET("", middleware.RequirePermission(auth.PermissionAssetRead), assetCtl.List)
 			assets.GET("/:id", middleware.RequirePermission(auth.PermissionAssetRead), assetCtl.Get)
 			assets.PUT("/:id", middleware.RequirePermission(auth.PermissionAssetUpdate), assetCtl.Update)
+			assets.POST("/:id/identity", middleware.RequirePermission(auth.PermissionAssetUpdate), assetCtl.GenerateIdentity)
 			assets.DELETE("/:id", middleware.RequirePermission(auth.PermissionAssetDelete), assetCtl.Delete)
 			assets.POST("/:id/status", middleware.RequirePermission(auth.PermissionAssetUpdate), assetCtl.ChangeStatus)
 			assets.GET("/:id/changes", middleware.RequirePermission(auth.PermissionAssetRead), assetCtl.ChangeLogs)

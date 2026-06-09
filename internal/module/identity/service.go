@@ -3,9 +3,17 @@ package identity
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"strings"
 
 	"asset-core/internal/infrastructure/kafka"
+
+	"gorm.io/gorm"
+)
+
+var (
+	ErrIdentityAlreadyBound = errors.New("identity already bound to another asset")
+	ErrAssetAlreadyBound    = errors.New("asset already bound to another identity")
 )
 
 type Service struct {
@@ -46,6 +54,16 @@ func (s *Service) Get(identityID string) (*Identity, error) {
 func (s *Service) Bind(identityID string, assetID uint64) (*Identity, error) {
 	item, err := s.repo.FindByIdentityID(identityID)
 	if err != nil {
+		return nil, err
+	}
+	if item.AssetID != 0 && item.AssetID != assetID {
+		return nil, ErrIdentityAlreadyBound
+	}
+	existing, err := s.repo.FindByAssetID(assetID)
+	if err == nil && existing.IdentityID != identityID {
+		return nil, ErrAssetAlreadyBound
+	}
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
 	item.AssetID = assetID

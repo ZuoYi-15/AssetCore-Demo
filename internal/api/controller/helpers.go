@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"asset-core/internal/module/identity"
 	apperrors "asset-core/internal/pkg/errors"
 	"asset-core/internal/pkg/response"
 
@@ -24,6 +25,10 @@ func parseID(c *gin.Context, name string) (uint64, bool) {
 func handleError(c *gin.Context, err error) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		response.Fail(c, http.StatusNotFound, apperrors.CodeNotFound, "resource not found")
+		return
+	}
+	if errors.Is(err, identity.ErrIdentityAlreadyBound) || errors.Is(err, identity.ErrAssetAlreadyBound) {
+		response.Fail(c, http.StatusConflict, apperrors.CodeIdentityConflict, err.Error())
 		return
 	}
 	response.Fail(c, http.StatusInternalServerError, apperrors.CodeInternal, err.Error())

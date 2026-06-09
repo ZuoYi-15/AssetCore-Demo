@@ -40,6 +40,14 @@ func (r *Repository) FindByFingerprint(hash string) (*Identity, error) {
 	return &item, nil
 }
 
+func (r *Repository) FindByAssetID(assetID uint64) (*Identity, error) {
+	var item Identity
+	if err := r.db.Where("asset_id = ?", assetID).First(&item).Error; err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
 func (r *Repository) Update(item *Identity) error {
 	return r.db.Save(item).Error
 }

@@ -21,6 +21,20 @@
 
     <el-table :data="items" v-loading="loading" height="560">
       <el-table-column prop="asset_name" label="资产名称" min-width="180" fixed="left" />
+      <el-table-column label="身份 ID" min-width="220">
+        <template #default="{ row }">
+          <div v-if="row.identity_id" class="identity-cell">
+            <el-tooltip :content="row.identity_id" placement="top">
+              <span class="mono identity-id">{{ shortIdentity(row.identity_id) }}</span>
+            </el-tooltip>
+            <el-button size="small" link type="primary" :icon="ExternalLink" @click="viewIdentity(row)">查看</el-button>
+          </div>
+          <div v-else class="identity-cell">
+            <el-tag type="info" effect="plain">未绑定</el-tag>
+            <el-button v-if="canUpdateAsset" size="small" link type="primary" :icon="Fingerprint" @click="generateIdentity(row)">生成身份 ID</el-button>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column prop="asset_type" label="类型" width="110" />
       <el-table-column prop="vendor" label="厂商" width="150" />
       <el-table-column prop="model" label="型号" width="140" />
@@ -146,13 +160,15 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox, type UploadFile, type UploadInstance } from 'element-plus';
-import { Download, FileSpreadsheet, GitBranch, History, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, UploadCloud } from 'lucide-vue-next';
+import { Download, ExternalLink, FileSpreadsheet, Fingerprint, GitBranch, History, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, UploadCloud } from 'lucide-vue-next';
 import StatusPill from '../components/StatusPill.vue';
 import { createAsset, deleteAsset, getAssetChanges, importAssetsExcel, listAssets, startWorkflow, updateAsset, verifyAsset } from '../services/api';
 import { hasPermission } from '../services/auth';
 import type { Asset, AssetForm, ChangeLog, WorkflowType } from '../types/api';
 
+const router = useRouter();
 const loading = ref(false);
 const items = ref<Asset[]>([]);
 const total = ref(0);
@@ -254,6 +270,36 @@ function flowTypeLabel(flowType: WorkflowType) {
     retire: '报废审批'
   };
   return labels[flowType];
+}
+
+function shortIdentity(identityID: string) {
+  if (identityID.length <= 28) {
+    return identityID;
+  }
+  return `${identityID.slice(0, 18)}...${identityID.slice(-8)}`;
+}
+
+function viewIdentity(row: Asset) {
+  if (!row.identity_id) {
+    return;
+  }
+  router.push({ path: '/identities', query: { identity_id: row.identity_id } });
+}
+
+function generateIdentity(row: Asset) {
+  router.push({
+    path: '/identities',
+    query: {
+      asset_id: row.id,
+      asset_name: row.asset_name,
+      serial_number: row.serial_number,
+      mac_address: row.mac_address,
+      vendor: row.vendor,
+      model: row.model,
+      ip_address: row.ip_address,
+      source: row.source || 'asset-ledger'
+    }
+  });
 }
 
 async function uploadExcel() {

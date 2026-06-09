@@ -27,6 +27,11 @@ export async function listAssets(params: Record<string, string | number>) {
   return unwrap<PageResult<Asset>>(res.data);
 }
 
+export async function getAsset(id: number) {
+  const res = await http.get(`/api/v1/assets/${id}`);
+  return unwrap<Asset>(res.data);
+}
+
 export async function createAsset(payload: AssetForm) {
   const res = await http.post('/api/v1/assets', payload);
   return unwrap<Asset>(res.data);
@@ -34,6 +39,11 @@ export async function createAsset(payload: AssetForm) {
 
 export async function updateAsset(id: number, payload: AssetForm) {
   const res = await http.put(`/api/v1/assets/${id}`, payload);
+  return unwrap<Asset>(res.data);
+}
+
+export async function generateAssetIdentity(id: number) {
+  const res = await http.post(`/api/v1/assets/${id}/identity`);
   return unwrap<Asset>(res.data);
 }
 

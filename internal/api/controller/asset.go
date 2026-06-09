@@ -78,6 +78,19 @@ func (ctl *AssetController) Update(c *gin.Context) {
 	response.OK(c, item)
 }
 
+func (ctl *AssetController) GenerateIdentity(c *gin.Context) {
+	id, ok := parseID(c, "id")
+	if !ok {
+		return
+	}
+	item, err := ctl.service.GenerateIdentity(id)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	response.OK(c, item)
+}
+
 func (ctl *AssetController) Delete(c *gin.Context) {
 	id, ok := parseID(c, "id")
 	if !ok {
