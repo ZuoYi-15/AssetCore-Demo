@@ -5,6 +5,7 @@ import type {
   ChangeLog,
   Identity,
   IdentityFeature,
+  IdentityRecord,
   ImportError,
   ImportAssetsResult,
   ImportTask,
@@ -81,6 +82,11 @@ export async function generateIdentity(payload: Record<string, string>) {
 export async function getIdentity(identityID: string) {
   const res = await http.get(`/api/v1/identities/${encodeURIComponent(identityID)}`);
   return unwrap<Identity>(res.data);
+}
+
+export async function listIdentities(params: Record<string, string | number>) {
+  const res = await http.get('/api/v1/identities', { params });
+  return unwrap<PageResult<IdentityRecord>>(res.data);
 }
 
 export async function bindIdentity(identityID: string, assetID: number) {

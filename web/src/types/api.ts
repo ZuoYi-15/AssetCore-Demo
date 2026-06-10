@@ -101,6 +101,22 @@ export interface Identity {
   updated_at: string;
 }
 
+export interface IdentityRecord {
+  id: number;
+  identity_id: string;
+  fingerprint_hash: string;
+  identity_level: string;
+  asset_id: number;
+  asset_name: string;
+  asset_type: string;
+  serial_number: string;
+  owner_department: string;
+  location: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface IdentityFeature {
   id: number;
   identity_id: string;

@@ -51,6 +51,10 @@ func (s *Service) Get(identityID string) (*Identity, error) {
 	return s.repo.FindByIdentityID(identityID)
 }
 
+func (s *Service) List(q Query, offset, limit int) ([]IdentityRecord, int64, error) {
+	return s.repo.List(q, offset, limit)
+}
+
 func (s *Service) Bind(identityID string, assetID uint64) (*Identity, error) {
 	item, err := s.repo.FindByIdentityID(identityID)
 	if err != nil {

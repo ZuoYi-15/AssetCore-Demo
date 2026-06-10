@@ -1,6 +1,10 @@
 package identity
 
-import "gorm.io/gorm"
+import (
+	"strings"
+
+	"gorm.io/gorm"
+)
 
 type Repository struct {
 	db *gorm.DB
@@ -46,6 +50,41 @@ func (r *Repository) FindByAssetID(assetID uint64) (*Identity, error) {
 		return nil, err
 	}
 	return &item, nil
+}
+
+func (r *Repository) List(q Query, offset, limit int) ([]IdentityRecord, int64, error) {
+	db := r.db.Table("asset_identity").
+		Select(`asset_identity.id,
+			asset_identity.identity_id,
+			asset_identity.fingerprint_hash,
+			asset_identity.identity_level,
+			asset_identity.asset_id,
+			asset.asset_name,
+			asset.asset_type,
+			asset.serial_number,
+			asset.owner_department,
+			asset.location,
+			asset_identity.status,
+			asset_identity.created_at,
+			asset_identity.updated_at`).
+		Joins("LEFT JOIN asset ON asset.id = asset_identity.asset_id")
+	if strings.TrimSpace(q.Keyword) != "" {
+		like := "%" + strings.TrimSpace(q.Keyword) + "%"
+		db = db.Where("asset_identity.identity_id LIKE ? OR asset_identity.fingerprint_hash LIKE ? OR asset.asset_name LIKE ? OR asset.serial_number LIKE ? OR asset.mac_address LIKE ? OR asset.ip_address LIKE ?", like, like, like, like, like, like)
+	}
+	if strings.TrimSpace(q.Status) != "" {
+		db = db.Where("asset_identity.status = ?", strings.TrimSpace(q.Status))
+	}
+
+	var total int64
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var items []IdentityRecord
+	if err := db.Order("asset_identity.id DESC").Offset(offset).Limit(limit).Scan(&items).Error; err != nil {
+		return nil, 0, err
+	}
+	return items, total, nil
 }
 
 func (r *Repository) Update(item *Identity) error {

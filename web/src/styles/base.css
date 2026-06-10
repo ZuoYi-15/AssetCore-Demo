@@ -343,6 +343,58 @@ a {
   font-size: 12px;
 }
 
+.identity-workbench {
+  display: grid;
+  gap: 16px;
+}
+
+.identity-create-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.asset-option {
+  display: grid;
+  gap: 2px;
+  line-height: 1.35;
+}
+
+.asset-option span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.selected-asset-panel {
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.selected-asset-title {
+  color: #101828;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.selected-asset-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: #667085;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.identity-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
 .split-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);

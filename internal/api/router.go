@@ -106,6 +106,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		identities.Use(middleware.AuthRequired(authService))
 		{
 			identities.POST("/generate", identityCtl.Generate)
+			identities.GET("", identityCtl.List)
 			identities.GET("/:identity_id", identityCtl.Get)
 			identities.POST("/:identity_id/bind", identityCtl.Bind)
 			identities.POST("/:identity_id/unbind", identityCtl.Unbind)

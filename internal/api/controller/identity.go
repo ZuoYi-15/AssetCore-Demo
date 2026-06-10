@@ -5,6 +5,7 @@ import (
 
 	"asset-core/internal/module/identity"
 	apperrors "asset-core/internal/pkg/errors"
+	"asset-core/internal/pkg/pagination"
 	"asset-core/internal/pkg/response"
 
 	"github.com/gin-gonic/gin"
@@ -30,6 +31,19 @@ func (ctl *IdentityController) Generate(c *gin.Context) {
 		return
 	}
 	response.Created(c, item)
+}
+
+func (ctl *IdentityController) List(c *gin.Context) {
+	page := pagination.FromQuery(c)
+	items, total, err := ctl.service.List(identity.Query{
+		Keyword: c.Query("keyword"),
+		Status:  c.Query("status"),
+	}, page.Offset(), page.PageSize)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	response.OK(c, pagination.Result{Items: items, Page: page.Page, PageSize: page.PageSize, Total: total})
 }
 
 func (ctl *IdentityController) Get(c *gin.Context) {
