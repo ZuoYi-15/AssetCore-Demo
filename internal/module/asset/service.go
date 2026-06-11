@@ -129,6 +129,42 @@ func (s *Service) GenerateIdentity(id uint64) (*Asset, error) {
 	return item, nil
 }
 
+func (s *Service) RefreshIdentity(id uint64) (*Asset, error) {
+	item, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if item.IdentityID == "" {
+		return item, nil
+	}
+	source := item.Source
+	if source == "" {
+		source = "asset-ledger"
+	}
+	refreshed, err := s.identityService.RefreshBound(item.IdentityID, item.ID, identity.GenerateRequest{
+		TenantID:     "default",
+		SerialNumber: item.SerialNumber,
+		Vendor:       item.Vendor,
+		Model:        item.Model,
+		MACAddress:   item.MACAddress,
+		IPAddress:    item.IPAddress,
+		Source:       source,
+	})
+	if err != nil {
+		return nil, err
+	}
+	before := *item
+	item.IdentityID = refreshed.IdentityID
+	item.TrustLevel = refreshed.IdentityLevel
+	if err := s.repo.Update(item); err != nil {
+		return nil, err
+	}
+	s.writeChangeLogs(before, *item)
+	s.indexAsset(*item)
+	_ = s.producer.Publish("asset.identity.refreshed", kafka.NewEvent("asset.identity.refreshed", item))
+	return item, nil
+}
+
 func (s *Service) Update(id uint64, req UpdateRequest) (*Asset, error) {
 	item, err := s.repo.FindByID(id)
 	if err != nil {

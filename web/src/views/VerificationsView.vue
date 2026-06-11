@@ -132,6 +132,36 @@
         />
       </div>
     </section>
+
+    <el-dialog v-model="recordDetailVisible" title="认证记录详情" width="760px">
+      <template v-if="recordResult">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="任务号" :span="2"><span class="mono">{{ recordResult.task.task_no }}</span></el-descriptions-item>
+          <el-descriptions-item label="任务状态"><StatusPill :value="recordResult.task.status" /></el-descriptions-item>
+          <el-descriptions-item label="结果"><StatusPill :value="recordResult.task.result" /></el-descriptions-item>
+          <el-descriptions-item label="分数">{{ recordResult.task.score }}</el-descriptions-item>
+          <el-descriptions-item label="冲突数">{{ recordResult.conflicts.length }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-divider />
+        <div class="panel-header">
+          <div class="panel-title">冲突字段</div>
+        </div>
+        <el-table :data="recordResult.conflicts" height="320">
+          <el-table-column prop="field" label="字段" width="140" />
+          <el-table-column prop="expected" label="期望" />
+          <el-table-column prop="actual" label="实际" />
+          <el-table-column label="等级" width="110">
+            <template #default="{ row }">
+              <StatusPill :value="row.severity === 'high' ? 'failed' : 'warning'" />
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
+      <template #footer>
+        <el-button @click="recordDetailVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -146,8 +176,10 @@ import type { Asset, VerificationRecord, VerificationResult } from '../types/api
 const assets = ref<Asset[]>([]);
 const records = ref<VerificationRecord[]>([]);
 const result = ref<VerificationResult | null>(null);
+const recordResult = ref<VerificationResult | null>(null);
 const assetLoading = ref(false);
 const recordLoading = ref(false);
+const recordDetailVisible = ref(false);
 const verifyingAssetID = ref<number | null>(null);
 const assetQuery = reactive({ keyword: '', status: '' });
 const recordQuery = reactive({ keyword: '', result: '' });
@@ -194,7 +226,8 @@ async function create(asset: Asset) {
 }
 
 async function openRecord(record: VerificationRecord) {
-  result.value = await getVerification(record.id);
+  recordResult.value = await getVerification(record.id);
+  recordDetailVisible.value = true;
 }
 
 function shortText(value: string) {

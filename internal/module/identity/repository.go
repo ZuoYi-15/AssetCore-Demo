@@ -91,6 +91,23 @@ func (r *Repository) Update(item *Identity) error {
 	return r.db.Save(item).Error
 }
 
+func (r *Repository) UpdateWithFeatures(item *Identity, oldIdentityID string, features []Feature) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(item).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("identity_id = ?", oldIdentityID).Delete(&Feature{}).Error; err != nil {
+			return err
+		}
+		if len(features) > 0 {
+			if err := tx.Create(&features).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func (r *Repository) ListFeatures(identityID string) ([]Feature, error) {
 	var items []Feature
 	err := r.db.Where("identity_id = ?", identityID).Order("id ASC").Find(&items).Error

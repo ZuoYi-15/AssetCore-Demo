@@ -77,6 +77,40 @@ func (s *Service) Bind(identityID string, assetID uint64) (*Identity, error) {
 	return item, nil
 }
 
+func (s *Service) RefreshBound(identityID string, assetID uint64, req GenerateRequest) (*Identity, error) {
+	item, err := s.repo.FindByIdentityID(identityID)
+	if err != nil {
+		return nil, err
+	}
+	if item.AssetID != 0 && item.AssetID != assetID {
+		return nil, ErrIdentityAlreadyBound
+	}
+
+	fingerprint, level := fingerprint(req)
+	nextIdentityID := "did:asset:" + fingerprint[:32]
+	if existing, err := s.repo.FindByFingerprint(fingerprint); err == nil && existing.ID != item.ID {
+		if existing.AssetID != 0 && existing.AssetID != assetID {
+			return nil, ErrIdentityAlreadyBound
+		}
+		return nil, ErrAssetAlreadyBound
+	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	oldIdentityID := item.IdentityID
+	item.IdentityID = nextIdentityID
+	item.FingerprintHash = fingerprint
+	item.IdentityLevel = level
+	item.AssetID = assetID
+	item.Status = StatusActive
+	features := buildFeatures(nextIdentityID, req)
+	if err := s.repo.UpdateWithFeatures(item, oldIdentityID, features); err != nil {
+		return nil, err
+	}
+	_ = s.producer.Publish("asset.identity.refreshed", kafka.NewEvent("identity.refreshed", item))
+	return item, nil
+}
+
 func (s *Service) Unbind(identityID string) (*Identity, error) {
 	item, err := s.repo.FindByIdentityID(identityID)
 	if err != nil {

@@ -10,17 +10,17 @@ import (
 )
 
 type Service struct {
-	repo      *Repository
-	assetRepo *asset.Repository
-	producer  kafka.Producer
+	repo         *Repository
+	assetService *asset.Service
+	producer     kafka.Producer
 }
 
-func NewService(repo *Repository, assetRepo *asset.Repository, producer kafka.Producer) *Service {
-	return &Service{repo: repo, assetRepo: assetRepo, producer: producer}
+func NewService(repo *Repository, assetService *asset.Service, producer kafka.Producer) *Service {
+	return &Service{repo: repo, assetService: assetService, producer: producer}
 }
 
 func (s *Service) Create(req CreateRequest) (*ResultResponse, error) {
-	a, err := s.assetRepo.FindByID(req.AssetID)
+	a, err := s.assetService.Get(req.AssetID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +44,13 @@ func (s *Service) Create(req CreateRequest) (*ResultResponse, error) {
 	}
 	if err := s.repo.CreateConflicts(conflicts); err != nil {
 		return nil, err
+	}
+	if a.IdentityID != "" {
+		if refreshed, err := s.assetService.RefreshIdentity(a.ID); err != nil {
+			return nil, err
+		} else {
+			a = refreshed
+		}
 	}
 	_ = s.producer.Publish("asset.verification.completed", kafka.NewEvent("verification.completed", task))
 	return &ResultResponse{Task: *task, Conflicts: conflicts}, nil

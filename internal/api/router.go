@@ -48,7 +48,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	assetService := asset.NewService(assetRepo, identityService, deps.EventProducer, esClient)
 
 	verificationRepo := verification.NewRepository(deps.DB)
-	verificationService := verification.NewService(verificationRepo, assetRepo, deps.EventProducer)
+	verificationService := verification.NewService(verificationRepo, assetService, deps.EventProducer)
 
 	dataRepo := data.NewRepository(deps.DB)
 	dataService := data.NewService(dataRepo, assetService, deps.EventProducer)
