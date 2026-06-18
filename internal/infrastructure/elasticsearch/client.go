@@ -96,7 +96,7 @@ func buildAssetQuery(q asset.Query, offset, limit int) map[string]interface{} {
 		must = append(must, map[string]interface{}{
 			"multi_match": map[string]interface{}{
 				"query":  q.Keyword,
-				"fields": []string{"asset_name^3", "serial_number^2", "identity_id^2", "mac_address", "ip_address", "hostname", "vendor", "model", "owner_user", "owner_department", "location"},
+				"fields": []string{"asset_name^3", "serial_number^2", "identity_id^2", "asset_hash_id^2", "rfid_uid^2", "mac_address", "ip_address", "hostname", "vendor", "model", "owner_user", "owner_department", "location", "building", "floor", "room"},
 			},
 		})
 	}
@@ -105,6 +105,15 @@ func buildAssetQuery(q asset.Query, offset, limit int) map[string]interface{} {
 	}
 	if q.AssetType != "" {
 		filter = append(filter, map[string]interface{}{"term": map[string]interface{}{"asset_type.keyword": q.AssetType}})
+	}
+	if q.Building != "" {
+		filter = append(filter, map[string]interface{}{"term": map[string]interface{}{"building.keyword": q.Building}})
+	}
+	if q.Floor != "" {
+		filter = append(filter, map[string]interface{}{"term": map[string]interface{}{"floor.keyword": q.Floor}})
+	}
+	if q.Room != "" {
+		filter = append(filter, map[string]interface{}{"term": map[string]interface{}{"room.keyword": q.Room}})
 	}
 	if len(must) == 0 {
 		must = append(must, map[string]interface{}{"match_all": map[string]interface{}{}})

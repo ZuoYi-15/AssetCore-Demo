@@ -60,6 +60,8 @@ export interface PageResult<T> {
 export interface Asset {
   id: number;
   identity_id: string;
+  asset_hash_id: string;
+  rfid_uid: string;
   asset_name: string;
   asset_type: string;
   vendor: string;
@@ -71,9 +73,23 @@ export interface Asset {
   owner_department: string;
   owner_user: string;
   location: string;
+  building: string;
+  floor: string;
+  room: string;
   source: string;
   trust_level: string;
   status: string;
+  initial_value: number;
+  depreciation_method: string;
+  depreciation_months: number;
+  salvage_rate: number;
+  in_service_date?: string;
+  deactivation_date?: string;
+  depreciated_months: number;
+  accumulated_depreciation: number;
+  impairment_provision: number;
+  current_net_value: number;
+  depreciation_stopped: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -88,6 +104,46 @@ export interface ChangeLog {
   new_value: string;
   operator: string;
   created_at: string;
+}
+
+export interface AssetInsurance {
+  id: number;
+  asset_id: number;
+  insurance_policy_no: string;
+  annual_premium: number;
+  insured_amount: number;
+  period_start: string;
+  period_end: string;
+  operator: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AssetInsurancePayload {
+  insurance_policy_no: string;
+  annual_premium?: number;
+  insured_amount?: number;
+  period_start: string;
+  period_end: string;
+  operator?: string;
+}
+
+export interface AssetImpairment {
+  id: number;
+  asset_id: number;
+  reason: string;
+  evidence_file_hash: string;
+  recoverable_amount: number;
+  impairment_amount: number;
+  reviewer: string;
+  created_at: string;
+}
+
+export interface AssetImpairmentPayload {
+  reason: string;
+  evidence_file_hash: string;
+  recoverable_amount: number;
+  reviewer?: string;
 }
 
 export interface Identity {

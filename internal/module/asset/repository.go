@@ -12,6 +12,15 @@ func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
+func (r *Repository) AutoMigrate() error {
+	if r.db.Migrator().HasIndex(&Asset{}, "idx_asset_asset_hash_id") {
+		if err := r.db.Migrator().DropIndex(&Asset{}, "idx_asset_asset_hash_id"); err != nil {
+			return err
+		}
+	}
+	return r.db.AutoMigrate(&Asset{}, &ChangeLog{}, &Insurance{}, &ImpairmentRecord{})
+}
+
 func (r *Repository) Create(a *Asset) error {
 	return r.db.Create(a).Error
 }
@@ -48,6 +57,15 @@ func (r *Repository) List(q Query, offset, limit int) ([]Asset, int64, error) {
 	if q.AssetType != "" {
 		db = db.Where("asset_type = ?", q.AssetType)
 	}
+	if q.Building != "" {
+		db = db.Where("building = ?", q.Building)
+	}
+	if q.Floor != "" {
+		db = db.Where("floor = ?", q.Floor)
+	}
+	if q.Room != "" {
+		db = db.Where("room = ?", q.Room)
+	}
 
 	var total int64
 	if err := db.Count(&total).Error; err != nil {
@@ -80,4 +98,24 @@ func (r *Repository) ListChangeLogs(assetID uint64) ([]ChangeLog, error) {
 	var logs []ChangeLog
 	err := r.db.Where("asset_id = ?", assetID).Order("id DESC").Find(&logs).Error
 	return logs, err
+}
+
+func (r *Repository) CreateInsurance(item *Insurance) error {
+	return r.db.Create(item).Error
+}
+
+func (r *Repository) ListInsurance(assetID uint64) ([]Insurance, error) {
+	var items []Insurance
+	err := r.db.Where("asset_id = ?", assetID).Order("period_start DESC, id DESC").Find(&items).Error
+	return items, err
+}
+
+func (r *Repository) CreateImpairmentRecord(item *ImpairmentRecord) error {
+	return r.db.Create(item).Error
+}
+
+func (r *Repository) ListImpairmentRecords(assetID uint64) ([]ImpairmentRecord, error) {
+	var items []ImpairmentRecord
+	err := r.db.Where("asset_id = ?", assetID).Order("id DESC").Find(&items).Error
+	return items, err
 }

@@ -10,6 +10,9 @@
           <el-option label="已退役" value="retired" />
         </el-select>
         <el-input v-model="query.asset_type" clearable placeholder="资产类型" style="width: 150px" />
+        <el-input v-model="query.building" clearable placeholder="大楼" style="width: 120px" />
+        <el-input v-model="query.floor" clearable placeholder="楼层" style="width: 110px" />
+        <el-input v-model="query.room" clearable placeholder="房间" style="width: 130px" />
         <el-button :icon="Search" @click="load">查询</el-button>
       </div>
       <div class="toolbar-right">
@@ -36,6 +39,8 @@
         </template>
       </el-table-column>
       <el-table-column prop="asset_type" label="类型" width="110" />
+      <el-table-column prop="asset_hash_id" label="链上存证 ID" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="rfid_uid" label="RFID UID" min-width="150" show-overflow-tooltip />
       <el-table-column prop="vendor" label="厂商" width="150" />
       <el-table-column prop="model" label="型号" width="140" />
       <el-table-column prop="serial_number" label="序列号" min-width="150" />
@@ -49,6 +54,20 @@
       </el-table-column>
       <el-table-column prop="owner_department" label="部门" width="140" />
       <el-table-column prop="location" label="位置" width="140" />
+      <el-table-column label="空间网格" min-width="190">
+        <template #default="{ row }">
+          {{ formatSpace(row) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="资产现值" width="130" align="right">
+        <template #default="{ row }">{{ formatMoney(row.current_net_value) }}</template>
+      </el-table-column>
+      <el-table-column label="累计折旧" width="130" align="right">
+        <template #default="{ row }">{{ formatMoney(row.accumulated_depreciation) }}</template>
+      </el-table-column>
+      <el-table-column label="减值准备" width="130" align="right">
+        <template #default="{ row }">{{ formatMoney(row.impairment_provision) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="370" fixed="right">
         <template #default="{ row }">
           <span class="table-actions">
@@ -88,6 +107,8 @@
       <div class="form-grid">
         <el-form-item label="资产名称"><el-input v-model="form.asset_name" /></el-form-item>
         <el-form-item label="资产类型"><el-input v-model="form.asset_type" /></el-form-item>
+        <el-form-item label="链上存证 ID"><el-input v-model="form.asset_hash_id" /></el-form-item>
+        <el-form-item label="RFID UID"><el-input v-model="form.rfid_uid" /></el-form-item>
         <el-form-item label="厂商"><el-input v-model="form.vendor" /></el-form-item>
         <el-form-item label="型号"><el-input v-model="form.model" /></el-form-item>
         <el-form-item label="序列号"><el-input v-model="form.serial_number" /></el-form-item>
@@ -97,6 +118,13 @@
         <el-form-item label="所属部门"><el-input v-model="form.owner_department" /></el-form-item>
         <el-form-item label="负责人"><el-input v-model="form.owner_user" /></el-form-item>
         <el-form-item label="位置"><el-input v-model="form.location" /></el-form-item>
+        <el-form-item label="大楼"><el-input v-model="form.building" /></el-form-item>
+        <el-form-item label="楼层"><el-input v-model="form.floor" /></el-form-item>
+        <el-form-item label="房间"><el-input v-model="form.room" /></el-form-item>
+        <el-form-item label="资产原值"><el-input-number v-model="form.initial_value" :min="0" :precision="2" style="width:100%" /></el-form-item>
+        <el-form-item label="折旧月数"><el-input-number v-model="form.depreciation_months" :min="0" :precision="0" style="width:100%" /></el-form-item>
+        <el-form-item label="累计折旧"><el-input-number v-model="form.accumulated_depreciation" :min="0" :precision="2" style="width:100%" /></el-form-item>
+        <el-form-item label="减值准备"><el-input-number v-model="form.impairment_provision" :min="0" :precision="2" style="width:100%" /></el-form-item>
         <el-form-item label="数据来源"><el-input v-model="form.source" /></el-form-item>
         <el-form-item v-if="editing" label="状态">
           <el-select v-model="form.status" style="width:100%">
@@ -174,7 +202,7 @@ const items = ref<Asset[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(20);
-const query = reactive({ keyword: '', status: '', asset_type: '' });
+const query = reactive({ keyword: '', status: '', asset_type: '', building: '', floor: '', room: '' });
 const formVisible = ref(false);
 const importVisible = ref(false);
 const workflowVisible = ref(false);
@@ -277,6 +305,18 @@ function shortIdentity(identityID: string) {
     return identityID;
   }
   return `${identityID.slice(0, 18)}...${identityID.slice(-8)}`;
+}
+
+function formatSpace(row: Asset) {
+  const parts = [row.building, row.floor, row.room].filter(Boolean);
+  return parts.length ? parts.join(' / ') : row.location || '-';
+}
+
+function formatMoney(value?: number) {
+  return Number(value || 0).toLocaleString('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
 function viewIdentity(row: Asset) {

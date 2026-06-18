@@ -18,6 +18,8 @@ func main() {
 	if err := db.AutoMigrate(
 		&asset.Asset{},
 		&asset.ChangeLog{},
+		&asset.Insurance{},
+		&asset.ImpairmentRecord{},
 		&identity.Identity{},
 		&identity.Feature{},
 		&verification.Task{},

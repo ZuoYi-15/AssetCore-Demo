@@ -2,6 +2,10 @@ import { http, unwrap } from './http';
 import type {
   Asset,
   AssetForm,
+  AssetImpairment,
+  AssetImpairmentPayload,
+  AssetInsurance,
+  AssetInsurancePayload,
   ChangeLog,
   Identity,
   IdentityFeature,
@@ -62,6 +66,26 @@ export async function changeAssetStatus(id: number, status: string) {
 export async function getAssetChanges(id: number) {
   const res = await http.get(`/api/v1/assets/${id}/changes`);
   return unwrap<ChangeLog[]>(res.data);
+}
+
+export async function listAssetInsurance(id: number) {
+  const res = await http.get(`/api/v1/assets/${id}/insurance`);
+  return unwrap<AssetInsurance[]>(res.data);
+}
+
+export async function addAssetInsurance(id: number, payload: AssetInsurancePayload) {
+  const res = await http.post(`/api/v1/assets/${id}/insurance`, payload);
+  return unwrap<AssetInsurance>(res.data);
+}
+
+export async function listAssetImpairments(id: number) {
+  const res = await http.get(`/api/v1/assets/${id}/impairments`);
+  return unwrap<AssetImpairment[]>(res.data);
+}
+
+export async function recordAssetImpairment(id: number, payload: AssetImpairmentPayload) {
+  const res = await http.post(`/api/v1/assets/${id}/impairments`, payload);
+  return unwrap<AssetImpairment>(res.data);
 }
 
 export async function verifyAsset(id: number) {

@@ -45,6 +45,9 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	esClient := elasticsearch.New(deps.Config.ES)
 
 	assetRepo := asset.NewRepository(deps.DB)
+	if err := assetRepo.AutoMigrate(); err != nil {
+		deps.Logger.Fatal("asset bootstrap failed", logger.Error(err))
+	}
 	assetService := asset.NewService(assetRepo, identityService, deps.EventProducer, esClient)
 
 	verificationRepo := verification.NewRepository(deps.DB)
@@ -98,6 +101,10 @@ func NewRouter(deps Dependencies) *gin.Engine {
 			assets.DELETE("/:id", middleware.RequirePermission(auth.PermissionAssetDelete), assetCtl.Delete)
 			assets.POST("/:id/status", middleware.RequirePermission(auth.PermissionAssetUpdate), assetCtl.ChangeStatus)
 			assets.GET("/:id/changes", middleware.RequirePermission(auth.PermissionAssetRead), assetCtl.ChangeLogs)
+			assets.POST("/:id/insurance", middleware.RequirePermission(auth.PermissionAssetUpdate), assetCtl.AddInsurance)
+			assets.GET("/:id/insurance", middleware.RequirePermission(auth.PermissionAssetRead), assetCtl.ListInsurance)
+			assets.POST("/:id/impairments", middleware.RequirePermission(auth.PermissionWorkflowApprove), assetCtl.RecordImpairment)
+			assets.GET("/:id/impairments", middleware.RequirePermission(auth.PermissionAssetRead), assetCtl.ListImpairments)
 			assets.POST("/:id/verify", middleware.RequirePermission(auth.PermissionAssetUpdate), verificationCtl.VerifyAsset)
 			assets.GET("/:id/verification-result", middleware.RequirePermission(auth.PermissionAssetRead), verificationCtl.LatestByAsset)
 		}

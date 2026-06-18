@@ -1,6 +1,8 @@
 CREATE TABLE IF NOT EXISTS asset (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   identity_id VARCHAR(128) UNIQUE,
+  asset_hash_id VARCHAR(128),
+  rfid_uid VARCHAR(128),
   asset_name VARCHAR(128) NOT NULL,
   asset_type VARCHAR(64),
   vendor VARCHAR(128),
@@ -12,9 +14,23 @@ CREATE TABLE IF NOT EXISTS asset (
   owner_department VARCHAR(128),
   owner_user VARCHAR(128),
   location VARCHAR(255),
+  building VARCHAR(128),
+  floor VARCHAR(64),
+  room VARCHAR(128),
   source VARCHAR(64),
   trust_level VARCHAR(32),
   status VARCHAR(32),
+  initial_value DOUBLE DEFAULT 0,
+  dep_method VARCHAR(32),
+  dep_months INT DEFAULT 0,
+  salvage_rate DOUBLE DEFAULT 0,
+  in_service_date DATETIME(3),
+  deactivation_date DATETIME(3),
+  depreciated_months INT DEFAULT 0,
+  accumulated_depreciation DOUBLE DEFAULT 0,
+  impairment_provision DOUBLE DEFAULT 0,
+  current_net_value DOUBLE DEFAULT 0,
+  depreciation_stopped BOOLEAN DEFAULT FALSE,
   created_at DATETIME(3),
   updated_at DATETIME(3),
   deleted_at DATETIME(3),
@@ -23,6 +39,11 @@ CREATE TABLE IF NOT EXISTS asset (
   INDEX idx_asset_ip_address (ip_address),
   INDEX idx_asset_status (status),
   INDEX idx_asset_asset_type (asset_type),
+  INDEX idx_asset_asset_hash_id (asset_hash_id),
+  INDEX idx_asset_rfid_uid (rfid_uid),
+  INDEX idx_asset_building (building),
+  INDEX idx_asset_floor (floor),
+  INDEX idx_asset_room (room),
   INDEX idx_asset_deleted_at (deleted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -35,6 +56,33 @@ CREATE TABLE IF NOT EXISTS asset_change_log (
   operator VARCHAR(128),
   created_at DATETIME(3),
   INDEX idx_asset_change_log_asset_id (asset_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS asset_insurance (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  asset_id BIGINT UNSIGNED NOT NULL,
+  insurance_policy_no VARCHAR(128),
+  annual_premium DOUBLE DEFAULT 0,
+  insured_amount DOUBLE DEFAULT 0,
+  period_start DATETIME(3),
+  period_end DATETIME(3),
+  operator VARCHAR(128),
+  created_at DATETIME(3),
+  updated_at DATETIME(3),
+  INDEX idx_asset_insurance_asset_id (asset_id),
+  INDEX idx_asset_insurance_policy_no (insurance_policy_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS asset_impairment_record (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  asset_id BIGINT UNSIGNED NOT NULL,
+  reason TEXT,
+  evidence_file_hash VARCHAR(128),
+  recoverable_amount DOUBLE DEFAULT 0,
+  impairment_amount DOUBLE DEFAULT 0,
+  reviewer VARCHAR(128),
+  created_at DATETIME(3),
+  INDEX idx_asset_impairment_record_asset_id (asset_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS asset_identity (

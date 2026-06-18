@@ -39,6 +39,9 @@ func (ctl *AssetController) List(c *gin.Context) {
 		Keyword:   c.Query("keyword"),
 		Status:    c.Query("status"),
 		AssetType: c.Query("asset_type"),
+		Building:  c.Query("building"),
+		Floor:     c.Query("floor"),
+		Room:      c.Query("room"),
 	}, page.Offset(), page.PageSize)
 	if err != nil {
 		handleError(c, err)
@@ -127,6 +130,68 @@ func (ctl *AssetController) ChangeLogs(c *gin.Context) {
 		return
 	}
 	items, err := ctl.service.ChangeLogs(id)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	response.OK(c, items)
+}
+
+func (ctl *AssetController) AddInsurance(c *gin.Context) {
+	id, ok := parseID(c, "id")
+	if !ok {
+		return
+	}
+	var req asset.InsuranceRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, err.Error())
+		return
+	}
+	item, err := ctl.service.AddInsurance(id, req)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	response.Created(c, item)
+}
+
+func (ctl *AssetController) ListInsurance(c *gin.Context) {
+	id, ok := parseID(c, "id")
+	if !ok {
+		return
+	}
+	items, err := ctl.service.ListInsurance(id)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	response.OK(c, items)
+}
+
+func (ctl *AssetController) RecordImpairment(c *gin.Context) {
+	id, ok := parseID(c, "id")
+	if !ok {
+		return
+	}
+	var req asset.ImpairmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, http.StatusBadRequest, apperrors.CodeInvalidParameter, err.Error())
+		return
+	}
+	item, err := ctl.service.RecordImpairment(id, req)
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	response.Created(c, item)
+}
+
+func (ctl *AssetController) ListImpairments(c *gin.Context) {
+	id, ok := parseID(c, "id")
+	if !ok {
+		return
+	}
+	items, err := ctl.service.ListImpairments(id)
 	if err != nil {
 		handleError(c, err)
 		return
